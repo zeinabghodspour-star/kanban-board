@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>کارهای طرح و برنامه | Kanban Board</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- فونت وزیر متن از Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK (compat mode for quick & reliable client-side integration) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Vazirmatn', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      font-family: 'Vazirmatn', system-ui, sans-serif;
+      box-sizing: border-box;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Dragging styles */
+    .dragging {
+      opacity: 0.45;
+      transform: scale(0.98);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    .drag-over {
+      background-color: rgba(224, 231, 255, 0.6) !important;
+      border: 2px dashed #6366f1 !important;
+    }
+
+    /* Print / PDF Styles */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+      }
+      header, #membersTagsDrawer, #firebaseSettingsBanner, .open-quick-add, .quick-add-btn, .quick-add-container, .delete-task-btn, .move-prev-btn, .move-next-btn, .add-subtask-wrapper, .delete-subtask-btn, .add-tag-btn, .remove-tag-btn {
+        display: none !important;
+      }
+      main {
+        padding: 0 !important;
+        overflow: visible !important;
+      }
+      #boardContainer {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12px !important;
+        min-width: 100% !important;
+        width: 100% !important;
+        padding-bottom: 0 !important;
+      }
+      .kanban-col {
+        width: 100% !important;
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+      }
+      .task-card {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        page-break-inside: avoid;
+        margin-bottom: 8px !important;
+      }
+      @page {
+        size: landscape;
+        margin: 8mm;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Datalist for Predefined Tags Autocomplete -->
+  <datalist id="predefinedTagsDatalist"></datalist>
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-[1920px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-indigo-200">
+          📋
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold text-slate-900 tracking-tight">کارهای طرح و برنامه</h1>
+          <!-- Hidden indicators to keep background logic clean & error-free -->
+          <span id="syncIndicator" class="hidden"><span id="syncStatusDot"></span><span id="syncStatusText"></span></span>
+          <span id="taskCountBadge" class="hidden"></span>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="flex flex-1 max-w-xl items-center gap-2">
+        <div class="relative w-full">
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="جستجو در عنوان، تگ، مسئول، ناظر، سابتسک..." 
+            class="w-full pl-3 pr-9 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+          >
+          <span class="absolute right-3 top-2 text-slate-400">🔍</span>
+        </div>
+        <select id="priorityFilter" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-600">
+          <option value="all">همه اولویت‌ها</option>
+          <option value="urgent">فوری</option>
+          <option value="high">بالا</option>
+          <option value="medium">متوسط</option>
+          <option value="low">پایین</option>
+        </select>
+      </div>
+
+      <!-- Three-Dots Action Menu (Top Left) -->
+      <div class="relative">
+        <button 
+          id="menuToggleBtn" 
+          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xl transition shadow-xs"
+          title="منوی تنظیمات و امکانات">
+          ⋮
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div 
+          id="dropdownMenu" 
+          class="hidden absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs flex flex-col transition-all">
+          
+          <button id="menuItemMembersTags" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+            <span class="text-base">👥</span>
+            <span>افراد و تگ‌ها</span>
+          </button>
+
+          <button id="menuItemFirebase" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+            <span class="text-base">🔥</span>
+            <span>اتصال به فایربیس</span>
+          </button>
+
+          <div class="border-t border-slate-100 my-1"></div>
+
+          <button id="menuItemExportPdf" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-indigo-50 text-indigo-700 font-bold text-right w-full transition">
+            <span class="text-base">📄</span>
+            <span>خروجی PDF (چاپ)</span>
+          </button>
+
+          <button id="menuItemExportJson" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+            <span class="text-base">⬇️</span>
+            <span>دانلود نسخه JSON</span>
+          </button>
+
+          <label class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium cursor-pointer">
+            <span class="text-base">⬆️</span>
+            <span>بارگذاری نسخه JSON</span>
+            <input type="file" id="importJsonInput" accept=".json" class="hidden">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible Members & Tags Drawer -->
+    <div id="membersTagsDrawer" class="hidden bg-slate-50 border-t border-b border-indigo-100 px-4 py-4 shadow-inner transition-all">
+      <div class="max-w-5xl mx-auto">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">👥</span>
+            <h3 class="text-sm font-bold text-slate-800">مدیریت اعضای تیم و برچسب‌ها</h3>
+          </div>
+          <button id="closeMembersTagsBtn" class="text-slate-400 hover:text-slate-600 text-lg font-bold leading-none">&times;</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Members Section -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span>👤</span>
+                <span>لیست افراد تیم</span>
+                <span class="text-[10px] text-slate-400 font-normal">(هر فرد یک رنگ رندوم اختصاصی می‌گیرد)</span>
+              </h4>
+            </div>
+            
+            <div class="flex gap-2 mb-3">
+              <input 
+                type="text" 
+                id="newMemberNameInput" 
+                placeholder="نام عضو جدید (مثلاً: رضا علوی)..." 
+                class="flex-1 text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+              <button 
+                id="addMemberBtn" 
+                class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition shadow-xs whitespace-nowrap"
+              >
+                + افزودن عضو
+              </button>
+            </div>
+
+            <div id="membersListContainer" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Tags Section -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span>🏷️</span>
+                <span>لیست تگ‌های پیش‌فرض</span>
+              </h4>
+            </div>
+
+            <div class="flex gap-2 mb-3">
+              <input 
+                type="text" 
+                id="newTagNameInput" 
+                placeholder="برچسب جدید (مثلاً: تست نهایی)..." 
+                class="flex-1 text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+              <button 
+                id="addTagBtn" 
+                class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition shadow-xs whitespace-nowrap"
+              >
+                + افزودن تگ
+              </button>
+            </div>
+
+            <div id="tagsListContainer" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible Firebase Settings Banner -->
+    <div id="firebaseSettingsBanner" class="hidden bg-slate-50 border-t border-slate-200 px-4 py-4 transition-all">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🔥</span>
+            <h3 class="text-sm font-bold text-slate-800">تنظیمات اتصال دیتابیس Real-time فایربیس</h3>
+          </div>
+          <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+        </div>
+        
+        <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+          اطلاعات دیتابیس اختصاصی شما (<code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">kanban-b11ae</code>) از پیش در سیستم تنظیم شده است. برای فعال‌سازی کامل، در کنسول فایربیس مطمئن شوید در تب <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">Rules</code> مقادیر روی <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">{ ".read": true, ".write": true }</code> باشد.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Database URL (آدرس پایگاه‌داده فایربیس)</label>
+            <input 
+              type="text" 
+              id="fbDbUrl" 
+              value="https://kanban-b11ae-default-rtdb.firebaseio.com"
+              placeholder="https://your-project-default-rtdb.firebaseio.com" 
+              class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              dir="ltr"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">API Key (کلید وب اپلیکیشن)</label>
+            <input 
+              type="text" 
+              id="fbApiKey" 
+              value="AIzaSyDZ6WldVZAA60z-U_GU4TgGTVnnqTudrZk"
+              placeholder="AIzaSy..." 
+              class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              dir="ltr"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">یا چسباندن مستقیم کل شیء firebaseConfig (اختیاری):</label>
+          <textarea 
+            id="fbConfigRaw" 
+            rows="3" 
+            placeholder='{ "apiKey": "...", "databaseURL": "...", "projectId": "..." }'
+            class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            dir="ltr"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 mt-3">
+          <button id="disconnectFbBtn" class="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium">
+            قطع اتصال و بازگشت به حافظه محلی
+          </button>
+          <button id="saveFbConfigBtn" class="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition shadow-xs">
+            ذخیره و اتصال به دیتابیس
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Kanban Board -->
+  <main class="flex-1 p-4 overflow-x-auto">
+    <div id="boardContainer" class="flex gap-4 min-w-[1100px] items-start pb-16">
+      
+      <!-- 1. جدید -->
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="new">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+            <h2 class="font-bold text-slate-800 text-sm">جدید</h2>
+            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+          </div>
+          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+        </div>
+        <div class="quick-add-container hidden mb-2"></div>
+        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="new"></div>
+        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+          <span>+</span>
+          <span>افزودن کارت</span>
+        </button>
+      </div>
+
+      <!-- 2. در حال انجام -->
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="in_progress">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+            <h2 class="font-bold text-slate-800 text-sm">در حال انجام</h2>
+            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+          </div>
+          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+        </div>
+        <div class="quick-add-container hidden mb-2"></div>
+        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="in_progress"></div>
+        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+          <span>+</span>
+          <span>افزودن کارت</span>
+        </button>
+      </div>
+
+      <!-- 3. منتظر تسک دیگر -->
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="waiting">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+            <h2 class="font-bold text-slate-800 text-sm">منتظر تسک دیگر</h2>
+            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+          </div>
+          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+        </div>
+        <div class="quick-add-container hidden mb-2"></div>
+        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="waiting"></div>
+        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+          <span>+</span>
+          <span>افزودن کارت</span>
+        </button>
+      </div>
+
+      <!-- 4. انجام شده -->
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="done">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <h2 class="font-bold text-slate-800 text-sm">انجام شده</h2>
+            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+          </div>
+          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+        </div>
+        <div class="quick-add-container hidden mb-2"></div>
+        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="done"></div>
+        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+          <span>+</span>
+          <span>افزودن کارت</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- JavaScript Logic -->
+  <script>
+    /**
+     * Data Model & State
+     */
+    const COLUMNS = [
+      { id: 'new', title: 'جدید', color: 'sky' },
+      { id: 'in_progress', title: 'در حال انجام', color: 'amber' },
+      { id: 'waiting', title: 'منتظر تسک دیگر', color: 'rose' },
+      { id: 'done', title: 'انجام شده', color: 'emerald' },
+    ];
+
+    const PRIORITIES = {
+      urgent: { label: 'فوری', bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
+      high:   { label: 'بالا',  bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-300' },
+      medium: { label: 'متوسط', bg: 'bg-blue-100',  text: 'text-blue-700',  border: 'border-blue-300' },
+      low:    { label: 'پایین', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-300' },
+    };
+
+    const PRIORITY_ORDER = ['urgent', 'high', 'medium', 'low'];
+
+    // Palette of vibrant, pleasant modern colors for members
+    const MEMBER_COLORS = [
+      '#4f46e5', // indigo
+      '#059669', // emerald
+      '#d97706', // amber
+      '#dc2626', // rose
+      '#7c3aed', // violet
+      '#0891b2', // cyan
+      '#db2777', // pink
+      '#ea580c', // orange
+      '#16a34a', // green
+      '#2563eb', // blue
+      '#9333ea', // purple
+      '#0d9488', // teal
+    ];
+
+    const INITIAL_MEMBERS = [
+      { id: 'm-1', name: 'علی محمدی', color: '#4f46e5' },
+      { id: 'm-2', name: 'سارا رضایی', color: '#059669' },
+      { id: 'm-3', name: 'محسن کریمی', color: '#ea580c' },
+      { id: 'm-4', name: 'نگار احمدی', color: '#db2777' },
+    ];
+
+    const INITIAL_TAGS = ['فرانت‌اند', 'بک‌اند', 'طراحی', 'UI/UX', 'QA', 'دیتابیس', 'پشتیبانی'];
+
+    // Default sample data with Subtasks and Supervisor (ناظر)
+    const INITIAL_TASKS = [
+      {
+        id: 'task-1',
+        title: 'طراحی ساختار دیتابیس کانبان',
+        description: 'ایجاد اسکیما برای ذخیره و هماهنگی آنلاین در Firebase Realtime',
+        status: 'new',
+        priority: 'urgent',
+        assignee: 'علی محمدی',
+        supervisor: 'سارا رضایی',
+        tags: ['دیتابیس', 'بک‌اند'],
+        subtasks: [
+          { id: 'sub-1-1', title: 'تنظیم متغیرهای Realtime Database', completed: true, assignee: 'علی محمدی' },
+          { id: 'sub-1-2', title: 'تست قوانین دسترسی read/write', completed: false, assignee: 'محسن کریمی' }
+        ],
+        createdAt: Date.now() - 36000000
+      },
+      {
+        id: 'task-2',
+        title: 'پیاده‌سازی ویرایش درجا (Inline Editing)',
+        description: 'امکان ویرایش تک‌تک فیلدها بدون باز شدن پنجره پاپ‌آپ',
+        status: 'in_progress',
+        priority: 'high',
+        assignee: 'محسن کریمی',
+        supervisor: 'علی محمدی',
+        tags: ['فرانت‌اند', 'UI/UX'],
+        subtasks: [
+          { id: 'sub-2-1', title: 'ویرایش درجا عنوان و توضیحات', completed: true, assignee: 'محسن کریمی' },
+          { id: 'sub-2-2', title: 'سوییچ چرخشی اولویت با کلیک', completed: true, assignee: 'نگار احمدی' },
+          { id: 'sub-2-3', title: 'طراحی ماژول انتخاب مسئول با رنگ اختصاصی', completed: false, assignee: 'سارا رضایی' }
+        ],
+        createdAt: Date.now() - 25000000
+      },
+      {
+        id: 'task-3',
+        title: 'انتظار برای تایید API کی سرویس نقشه',
+        description: 'باید مدیر سیستم دسترسی‌های لازم را بدهد',
+        status: 'waiting',
+        priority: 'medium',
+        assignee: 'نگار احمدی',
+        supervisor: 'محسن کریمی',
+        tags: ['پشتیبانی'],
+        subtasks: [
+          { id: 'sub-3-1', title: 'ارسال ایمیل درخواست دسترسی', completed: true, assignee: 'نگار احمدی' },
+          { id: 'sub-3-2', title: 'تست کلید دریافتی در محیط استیج', completed: false, assignee: 'علی محمدی' }
+        ],
+        createdAt: Date.now() - 15000000
+      },
+      {
+        id: 'task-4',
+        title: 'راه‌اندازی فونت فارسی وزیر متن',
+        description: 'افزودن CDN و بهبود تایپوگرافی در تمامی ابعاد نمایشگرها',
+        status: 'done',
+        priority: 'low',
+        assignee: 'علی محمدی',
+        supervisor: 'سارا رضایی',
+        tags: ['طراحی'],
+        subtasks: [
+          { id: 'sub-4-1', title: 'تنظیم تگ link در هدر HTML', completed: true, assignee: 'علی محمدی' }
+        ],
+        createdAt: Date.now() - 10000000
+      },
+      {
+        id: 'task-5',
+        title: 'تست ریسپانسیو ستون‌ها',
+        description: 'بررسی اسکرول افقی روی صفحات با سایز متوسط و تبلت',
+        status: 'completed',
+        priority: 'low',
+        assignee: 'سارا رضایی',
+        supervisor: 'نگار احمدی',
+        tags: ['QA'],
+        subtasks: [
+          { id: 'sub-5-1', title: 'تست در مرورگر کروم', completed: true, assignee: 'سارا رضایی' },
+          { id: 'sub-5-2', title: 'تست در مرورگر سافاری آیفون', completed: true, assignee: 'نگار احمدی' }
+        ],
+        createdAt: Date.now() - 5000000
+      }
+    ];
+
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDZ6WldVZAA60z-U_GU4TgGTVnnqTudrZk",
+      authDomain: "kanban-b11ae.firebaseapp.com",
+      databaseURL: "https://kanban-b11ae-default-rtdb.firebaseio.com",
+      projectId: "kanban-b11ae",
+      storageBucket: "kanban-b11ae.firebasestorage.app",
+      messagingSenderId: "813385232643",
+      appId: "1:813385232643:web:b03d5867009fb1e435f936"
+    };
+
+    let tasks = [];
+    let members = [];
+    let availableTags = [];
+    let firebaseApp = null;
+    let firebaseDb = null;
+    let isFirebaseConnected = false;
+    let draggedTaskId = null;
+
+    /**
+     * Initialize Application
+     */
+    function initApp() {
+      loadStorageData();
+      loadFirebaseConfig();
+      setupEventListeners();
+      renderMembersDrawer();
+      renderTagsDrawer();
+      updateDataListTags();
+      renderBoard();
+    }
+
+    /**
+     * Members & Tags Helpers
+     */
+    function getMemberColor(name) {
+      if (!name || name === 'نامشخص' || name === 'تعیین مسئول' || name === 'بدون مسئول') {
+        return '#64748b'; // slate-500
+      }
+      const found = members.find(m => m.name.trim().toLowerCase() === name.trim().toLowerCase());
+      if (found && found.color) {
+        return found.color;
+      }
+      // Deterministic fallback color from name string
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const idx = Math.abs(hash) % MEMBER_COLORS.length;
+      return MEMBER_COLORS[idx];
+    }
+
+    function getRandomColor() {
+      // Pick a color not currently heavily used, or random from palette
+      const usedColors = new Set(members.map(m => m.color));
+      const unused = MEMBER_COLORS.filter(c => !usedColors.has(c));
+      if (unused.length > 0) {
+        return unused[Math.floor(Math.random() * unused.length)];
+      }
+      return MEMBER_COLORS[Math.floor(Math.random() * MEMBER_COLORS.length)];
+    }
+
+    function addNewMember(name) {
+      const cleanName = name.trim();
+      if (!cleanName) return;
+      if (members.some(m => m.name.toLowerCase() === cleanName.toLowerCase())) {
+        alert('این فرد قبلاً به لیست اضافه شده است.');
+        return;
+      }
+      const newMember = {
+        id: 'm-' + Date.now(),
+        name: cleanName,
+        color: getRandomColor()
+      };
+      members.push(newMember);
+      syncMembers();
+    }
+
+    function removeMember(memberId) {
+      members = members.filter(m => m.id !== memberId);
+      syncMembers();
+    }
+
+    function addNewTag(tag) {
+      const cleanTag = tag.trim();
+      if (!cleanTag) return;
+      if (availableTags.some(t => t.toLowerCase() === cleanTag.toLowerCase())) {
+        alert('این برچسب قبلاً وجود دارد.');
+        return;
+      }
+      availableTags.push(cleanTag);
+      syncTags();
+    }
+
+    function removeTag(tag) {
+      availableTags = availableTags.filter(t => t !== tag);
+      syncTags();
+    }
+
+    function renderMembersDrawer() {
+      const container = document.getElementById('membersListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      if (members.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400">هنوز عضوی ثبت نشده است.</span>';
+        return;
+      }
+      members.forEach(m => {
+        const chip = document.createElement('div');
+        chip.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border shadow-xs transition';
+        chip.style.backgroundColor = `${m.color}15`;
+        chip.style.color = m.color;
+        chip.style.borderColor = `${m.color}40`;
+        chip.innerHTML = `
+          <span class="w-2 h-2 rounded-full" style="background-color: ${m.color};"></span>
+          <span>${escapeHtml(m.name)}</span>
+          <button class="delete-member-btn text-slate-400 hover:text-rose-600 font-bold text-sm leading-none ml-0.5" data-id="${m.id}" title="حذف فرد">&times;</button>
+        `;
+        chip.querySelector('.delete-member-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeMember(m.id);
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    function renderTagsDrawer() {
+      const container = document.getElementById('tagsListContainer');
+      if (!container) return;
+      container.innerHTML = '';
+      if (availableTags.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400">تگی ثبت نشده است.</span>';
+        return;
+      }
+      availableTags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200';
+        chip.innerHTML = `
+          <span># ${escapeHtml(tag)}</span>
+          <button class="delete-tag-btn text-slate-400 hover:text-rose-600 font-bold leading-none" data-tag="${escapeHtml(tag)}" title="حذف تگ">&times;</button>
+        `;
+        chip.querySelector('.delete-tag-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeTag(tag);
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    function updateDataListTags() {
+      const datalist = document.getElementById('predefinedTagsDatalist');
+      if (!datalist) return;
+      datalist.innerHTML = '';
+      availableTags.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        datalist.appendChild(opt);
+      });
+    }
+
+    /**
+     * Storage & Synchronization (Firebase + LocalStorage Fallback)
+     */
+    function loadStorageData() {
+      // 1. Tasks
+      const storedTasks = localStorage.getItem('kanban_tasks_data');
+      if (storedTasks) {
+        try {
+          tasks = JSON.parse(storedTasks);
+        } catch (e) {
+          tasks = INITIAL_TASKS;
+        }
+      } else {
+        tasks = INITIAL_TASKS;
+      }
+
+      // Ensure tasks data compatibility (convert reporter to supervisor and ensure subtasks array)
+      tasks.forEach(t => {
+        if (!t.supervisor && t.reporter) t.supervisor = t.reporter;
+        if (!Array.isArray(t.subtasks)) t.subtasks = [];
+      });
+
+      // 2. Members
+      const storedMembers = localStorage.getItem('kanban_members');
+      if (storedMembers) {
+        try {
+          members = JSON.parse(storedMembers);
+        } catch (e) {
+          members = INITIAL_MEMBERS;
+        }
+      } else {
+        members = INITIAL_MEMBERS;
+      }
+
+      // 3. Tags
+      const storedTags = localStorage.getItem('kanban_tags');
+      if (storedTags) {
+        try {
+          availableTags = JSON.parse(storedTags);
+        } catch (e) {
+          availableTags = INITIAL_TAGS;
+        }
+      } else {
+        availableTags = INITIAL_TAGS;
+      }
+    }
+
+    function saveTasksToLocalStorage() {
+      localStorage.setItem('kanban_tasks_data', JSON.stringify(tasks));
+      updateTaskCount();
+    }
+
+    function syncTasks(shouldNotifyFirebase = true) {
+      saveTasksToLocalStorage();
+      renderBoard();
+
+      if (isFirebaseConnected && firebaseDb && shouldNotifyFirebase) {
+        setSyncStatus('syncing', 'در حال ذخیره در فایربیس...');
+        firebaseDb.ref('kanban_tasks').set(tasks)
+          .then(() => {
+            console.log("Tasks successfully saved to Firebase!");
+            setSyncStatus('online', 'متصل به فایربیس (Realtime)');
+          })
+          .catch((err) => {
+            console.error('Firebase save error:', err);
+            setSyncStatus('error', 'خطا در ذخیره فایربیس');
+            if (err.message && (err.message.includes('permission_denied') || err.message.includes('PERMISSION_DENIED'))) {
+              alert('خطای فایربیس: دسترسی ذخیره‌سازی مسدود است!\n\nلطفاً در تب Rules کنسول فایربیس، دسترسی write را روی true تنظیم کرده و دکمه Publish را بزنید.');
+            }
+          });
+      }
+    }
+
+    function syncMembers(shouldNotifyFirebase = true) {
+      localStorage.setItem('kanban_members', JSON.stringify(members));
+      renderMembersDrawer();
+      renderBoard();
+
+      if (isFirebaseConnected && firebaseDb && shouldNotifyFirebase) {
+        firebaseDb.ref('kanban_members').set(members);
+      }
+    }
+
+    function syncTags(shouldNotifyFirebase = true) {
+      localStorage.setItem('kanban_tags', JSON.stringify(availableTags));
+      renderTagsDrawer();
+      updateDataListTags();
+
+      if (isFirebaseConnected && firebaseDb && shouldNotifyFirebase) {
+        firebaseDb.ref('kanban_tags').set(availableTags);
+      }
+    }
+
+    function setSyncStatus(state, text) {
+      const indicator = document.getElementById('syncIndicator');
+      if (!indicator) return;
+      const textElem = document.getElementById('syncStatusText');
+      const dotElem = document.getElementById('syncStatusDot');
+
+      if (textElem && text) {
+        textElem.textContent = text;
+      }
+
+      indicator.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium text-xs ';
+      let dotClass = 'w-2 h-2 rounded-full ';
+
+      if (state === 'online') {
+        indicator.className += 'bg-emerald-100 text-emerald-800';
+        dotClass += 'bg-emerald-500';
+      } else if (state === 'syncing') {
+        indicator.className += 'bg-blue-100 text-blue-800';
+        dotClass += 'bg-blue-500 animate-spin';
+      } else if (state === 'error') {
+        indicator.className += 'bg-rose-100 text-rose-800';
+        dotClass += 'bg-rose-500';
+      } else {
+        indicator.className += 'bg-amber-100 text-amber-800';
+        dotClass += 'bg-amber-500 animate-pulse';
+      }
+
+      if (dotElem) {
+        dotElem.className = dotClass;
+      }
+    }
+
+    /**
+     * Firebase Realtime Database Integration
+     */
+    function initFirebase(config) {
+      try {
+        if (firebaseApp) {
+          firebase.app().delete();
+        }
+        firebaseApp = firebase.initializeApp(config);
+        firebaseDb = firebase.database();
+        isFirebaseConnected = true;
+
+        // Monitor physical connection to Firebase servers
+        firebaseDb.ref('.info/connected').on('value', (snap) => {
+          if (snap.val() === true) {
+            console.log("Firebase connection established successfully.");
+            setSyncStatus('online', 'متصل به فایربیس (Realtime)');
+          } else {
+            console.log("Firebase connecting...");
+            if (isFirebaseConnected) {
+              setSyncStatus('syncing', 'در حال اتصال به فایربیس...');
+            }
+          }
+        });
+
+        // 1. Listen for Tasks updates in Realtime
+        firebaseDb.ref('kanban_tasks').on('value', (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            let taskList = null;
+            if (Array.isArray(data)) {
+              taskList = data.filter(Boolean);
+            } else if (typeof data === 'object') {
+              taskList = Object.values(data).filter(Boolean);
+            }
+
+            if (taskList && taskList.length > 0) {
+              tasks = taskList;
+              tasks.forEach(t => {
+                if (t.status === 'completed') t.status = 'done';
+                if (!t.supervisor && t.reporter) t.supervisor = t.reporter;
+                if (!Array.isArray(t.subtasks)) t.subtasks = [];
+              });
+              saveTasksToLocalStorage();
+              renderBoard();
+            }
+          } else if (tasks.length > 0) {
+            // Initial seed if cloud DB is completely blank
+            firebaseDb.ref('kanban_tasks').set(tasks);
+          }
+        }, (error) => {
+          console.error("Firebase listen error (tasks):", error);
+          setSyncStatus('error', 'عدم دسترسی به فایربیس (Rules بسته است)');
+          alert('توجه: اتصال به دیتابیس فایربیس به دلیل قوانین دسترسی مسدود شد!\n\nلطفاً در کنسول فایربیس وارد Realtime Database > تب Rules شده و مطمئن شوید دسترسی read و write روی true است:\n{\n  ".read": true,\n  ".write": true\n}\nو سپس Publish را بزنید.');
+        });
+
+        // 2. Listen for Members updates in Realtime
+        firebaseDb.ref('kanban_members').on('value', (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            let mList = null;
+            if (Array.isArray(data)) mList = data.filter(Boolean);
+            else if (typeof data === 'object') mList = Object.values(data).filter(Boolean);
+
+            if (mList && mList.length > 0) {
+              members = mList;
+              localStorage.setItem('kanban_members', JSON.stringify(members));
+              renderMembersDrawer();
+              renderBoard();
+            }
+          } else if (members.length > 0) {
+            firebaseDb.ref('kanban_members').set(members);
+          }
+        });
+
+        // 3. Listen for Tags updates in Realtime
+        firebaseDb.ref('kanban_tags').on('value', (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            let tList = null;
+            if (Array.isArray(data)) tList = data.filter(Boolean);
+            else if (typeof data === 'object') tList = Object.values(data).filter(Boolean);
+
+            if (tList && tList.length > 0) {
+              availableTags = tList;
+              localStorage.setItem('kanban_tags', JSON.stringify(availableTags));
+              renderTagsDrawer();
+              updateDataListTags();
+            }
+          } else if (availableTags.length > 0) {
+            firebaseDb.ref('kanban_tags').set(availableTags);
+          }
+        });
+
+      } catch (e) {
+        console.error("Firebase initialization failed:", e);
+        isFirebaseConnected = false;
+        setSyncStatus('error', 'خطا در مشخصات فایربیس');
+      }
+    }
+
+    function loadFirebaseConfig() {
+      if (localStorage.getItem('kanban_firebase_disabled') === 'true') {
+        setSyncStatus('offline', 'حافظه محلی (آفلاین)');
+        return;
+      }
+
+      const savedConfig = localStorage.getItem('kanban_firebase_config');
+      let config = DEFAULT_FIREBASE_CONFIG;
+      if (savedConfig) {
+        try {
+          config = JSON.parse(savedConfig);
+        } catch (e) {
+          config = DEFAULT_FIREBASE_CONFIG;
+        }
+      }
+      if (config && (config.databaseURL || config.apiKey)) {
+        document.getElementById('fbDbUrl').value = config.databaseURL || '';
+        document.getElementById('fbApiKey').value = config.apiKey || '';
+        document.getElementById('fbConfigRaw').value = JSON.stringify(config, null, 2);
+        initFirebase(config);
+      }
+    }
+
+    /**
+     * Board Rendering & Filtering
+     */
+    function renderBoard() {
+      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+      const priorityFilter = document.getElementById('priorityFilter').value;
+
+      COLUMNS.forEach(col => {
+        const colContainer = document.querySelector(`.task-list[data-column-id="${col.id}"]`);
+        const countBadge = document.querySelector(`.kanban-col[data-column-id="${col.id}"] .col-count`);
+        if (!colContainer) return;
+
+        const colTasks = tasks.filter(t => t.status === col.id);
+        const filteredTasks = colTasks.filter(t => {
+          const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
+          const matchesSearch = !searchTerm || 
+            (t.title && t.title.toLowerCase().includes(searchTerm)) ||
+            (t.description && t.description.toLowerCase().includes(searchTerm)) ||
+            (t.assignee && t.assignee.toLowerCase().includes(searchTerm)) ||
+            (t.supervisor && t.supervisor.toLowerCase().includes(searchTerm)) ||
+            (t.tags && t.tags.some(tag => tag.toLowerCase().includes(searchTerm))) ||
+            (t.subtasks && t.subtasks.some(sub => 
+              (sub.title && sub.title.toLowerCase().includes(searchTerm)) ||
+              (sub.assignee && sub.assignee.toLowerCase().includes(searchTerm))
+            ));
+          return matchesPriority && matchesSearch;
+        });
+
+        if (countBadge) {
+          countBadge.textContent = colTasks.length;
+        }
+
+        colContainer.innerHTML = '';
+        if (filteredTasks.length === 0) {
+          colContainer.innerHTML = `
+            <div class="py-8 text-center text-slate-400 text-xs border-2 border-dashed border-slate-200/80 rounded-xl">
+              کارت فعالی نیست
+            </div>
+          `;
+        } else {
+          filteredTasks.forEach(task => {
+            colContainer.appendChild(createTaskCardElement(task));
+          });
+        }
+      });
+
+      updateTaskCount();
+    }
+
+    function updateTaskCount() {
+      const countBadge = document.getElementById('taskCountBadge');
+      if (countBadge) {
+        countBadge.textContent = `${tasks.length} تسک ثبت شده`;
+      }
+    }
+
+    /**
+     * Create Single Task Card
+     */
+    function createTaskCardElement(task) {
+      const priorityMeta = PRIORITIES[task.priority] || PRIORITIES.medium;
+      const assigneeColor = getMemberColor(task.assignee);
+      const supervisorColor = getMemberColor(task.supervisor);
+      
+      const card = document.createElement('div');
+      card.className = 'task-card bg-white rounded-xl p-3 shadow-xs hover:shadow-md border border-slate-200/90 transition group cursor-grab active:cursor-grabbing relative';
+      card.draggable = true;
+      card.dataset.taskId = task.id;
+
+      card.addEventListener('dragstart', handleDragStart);
+      card.addEventListener('dragend', handleDragEnd);
+
+      // Render Tags
+      const tagsList = task.tags || [];
+      const tagsHtml = tagsList.map((tag, idx) => `
+        <span class="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+          <span class="tag-text cursor-pointer hover:underline" data-tag-idx="${idx}" title="کلیک برای ویرایش">${escapeHtml(tag)}</span>
+          <button class="remove-tag-btn text-slate-400 hover:text-rose-600 font-bold leading-none" data-tag-idx="${idx}" title="حذف تگ">&times;</button>
+        </span>
+      `).join('');
+
+      // Subtasks calculation
+      const subtasks = task.subtasks || [];
+      const totalSubs = subtasks.length;
+      const completedSubs = subtasks.filter(s => s.completed).length;
+      const progressPercent = totalSubs > 0 ? Math.round((completedSubs / totalSubs) * 100) : 0;
+
+      // Render Subtasks HTML
+      const subtasksHtml = subtasks.map(sub => {
+        const subAssigneeColor = getMemberColor(sub.assignee);
+        return `
+          <div class="subtask-item bg-white p-1.5 rounded-lg border border-slate-200/80 shadow-2xs group/sub flex flex-col gap-1 transition" data-subtask-id="${sub.id}">
+            <!-- Top Row: Checkbox + Title + Delete Cross -->
+            <div class="flex items-center gap-1.5 justify-between">
+              <label class="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer select-none">
+                <input type="checkbox" class="subtask-checkbox rounded text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600" ${sub.completed ? 'checked' : ''}>
+                <span class="subtask-title text-xs ${sub.completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'} truncate cursor-pointer hover:text-indigo-600" title="کلیک برای ویرایش سابتسک">
+                  ${escapeHtml(sub.title || 'بدون عنوان')}
+                </span>
+              </label>
+              <button class="delete-subtask-btn text-slate-300 hover:text-rose-600 font-bold text-sm px-1 leading-none rounded hover:bg-rose-50 transition" title="حذف سریع سابتسک">&times;</button>
+            </div>
+            
+            <!-- Bottom Row: Assignee directly underneath subtask -->
+            <div class="flex items-center justify-between text-[10px] text-slate-500 pl-1 pr-5">
+              <div 
+                class="subtask-assignee-pill flex items-center gap-1 cursor-pointer hover:opacity-85 px-1.5 py-0.5 rounded transition border"
+                style="background-color: ${subAssigneeColor}15; color: ${subAssigneeColor}; border-color: ${subAssigneeColor}40;"
+                title="کلیک برای تغییر مسئول سابتسک"
+              >
+                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${subAssigneeColor};"></span>
+                <span class="subtask-assignee font-medium">${escapeHtml(sub.assignee || 'تعیین مسئول')}</span>
+                <span class="text-[9px] opacity-60">▼</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <!-- Card Top Bar: Priority Badge & Move/Delete Controls -->
+        <div class="flex items-center justify-between mb-2 gap-1">
+          <!-- Priority Badge -->
+          <div 
+            class="priority-badge text-[11px] font-bold px-2 py-0.5 rounded-md border cursor-pointer select-none transition hover:opacity-80 flex items-center gap-1 ${priorityMeta.bg} ${priorityMeta.text} ${priorityMeta.border}" 
+            title="کلیک برای تغییر اولویت"
+          >
+            <span>⚡</span>
+            <span class="priority-label">${priorityMeta.label}</span>
+          </div>
+
+          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+            <button class="move-prev-btn text-xs text-slate-400 hover:text-indigo-600 px-1 py-0.5 rounded hover:bg-slate-100" title="انتقال به ستون قبلی">◀</button>
+            <button class="move-next-btn text-xs text-slate-400 hover:text-indigo-600 px-1 py-0.5 rounded hover:bg-slate-100" title="انتقال به ستون بعدی">▶</button>
+            <button class="delete-task-btn text-slate-400 hover:text-rose-600 px-1 py-0.5 rounded hover:bg-rose-50 text-xs transition" title="حذف کارت">🗑️</button>
+          </div>
+        </div>
+
+        <!-- Task Title -->
+        <div class="task-title text-sm font-bold text-slate-900 mb-1 cursor-pointer hover:bg-slate-50 p-1 rounded -m-1 transition leading-snug break-words" title="کلیک برای ویرایش عنوان">
+          ${escapeHtml(task.title || 'بدون عنوان')}
+        </div>
+
+        <!-- Task Description -->
+        <div class="task-desc text-xs text-slate-500 mb-2 cursor-pointer hover:bg-slate-50 p-1 rounded -m-1 transition min-h-[1.2rem] break-words whitespace-pre-wrap" title="کلیک برای ویرایش توضیحات">
+          ${escapeHtml(task.description || 'افزودن توضیحات...')}
+        </div>
+
+        <!-- Subtasks Section (Attached to card) -->
+        <div class="subtasks-container mb-2.5 bg-slate-50/90 rounded-xl p-2 border border-slate-200/60">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1.5">
+            <div class="flex items-center gap-1">
+              <span>☑️</span>
+              <span>سابتسک‌ها</span>
+              <span class="text-[10px] text-slate-400 font-normal">(${completedSubs}/${totalSubs})</span>
+            </div>
+            <!-- Progress Bar -->
+            ${totalSubs > 0 ? `
+              <div class="w-14 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: ${progressPercent}%;"></div>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="subtask-list space-y-1.5 mb-1.5">
+            ${subtasksHtml}
+          </div>
+
+          <!-- Add Subtask Inline Button & Container -->
+          <div class="add-subtask-wrapper">
+            <button class="add-subtask-btn w-full py-1 text-[11px] font-semibold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition flex items-center justify-center gap-1 border border-dashed border-slate-300 bg-white/60">
+              <span>+</span>
+              <span>افزودن سابتسک</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tags Area -->
+        <div class="flex flex-wrap items-center gap-1.5 mb-3">
+          ${tagsHtml}
+          <button class="add-tag-btn inline-flex items-center gap-0.5 text-[10px] text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-dashed border-slate-300 hover:border-indigo-300 px-1.5 py-0.5 rounded-md transition" title="افزودن تگ">
+            <span>+ تگ</span>
+          </button>
+        </div>
+
+        <!-- Footer: Responsible Member (Wide Pill, No 'اساینی' label) & Supervisor (ناظر) -->
+        <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <!-- Responsible Person (No 'اساینی' label, wide, member color) -->
+          <div class="flex items-center gap-1.5 flex-1 min-w-[130px]" title="کلیک برای تغییر فرد مسئول">
+            <div 
+              class="task-assignee-pill flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold cursor-pointer transition shadow-2xs w-full justify-between hover:opacity-90" 
+              style="background-color: ${assigneeColor}15; color: ${assigneeColor}; border-color: ${assigneeColor}40;"
+            >
+              <div class="flex items-center gap-1.5 truncate">
+                <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${assigneeColor};"></span>
+                <span class="task-assignee-text truncate">${escapeHtml(task.assignee || 'تعیین مسئول')}</span>
+              </div>
+              <span class="text-[9px] opacity-60">▼</span>
+            </div>
+          </div>
+
+          <!-- Supervisor (ناظر) -->
+          <div class="task-supervisor-pill flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer hover:bg-slate-100 px-1.5 py-1 rounded-md transition" title="کلیک برای تغییر ناظر">
+            <span>👁️</span>
+            <span class="text-slate-400 text-[10px]">ناظر:</span>
+            <span class="task-supervisor-text font-semibold truncate max-w-[85px]" style="color: ${supervisorColor};">
+              ${escapeHtml(task.supervisor || 'نامشخص')}
+            </span>
+          </div>
+        </div>
+      `;
+
+      attachInlineEditHandlers(card, task);
+      return card;
+    }
+
+    /**
+     * Attach In-place (Inline) Click-to-Edit Handlers on Card Elements
+     */
+    function attachInlineEditHandlers(card, task) {
+      // 1. Inline Edit Title
+      const titleElem = card.querySelector('.task-title');
+      titleElem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startInlineTextEdit(titleElem, task.title, (newVal) => {
+          if (newVal.trim()) {
+            task.title = newVal.trim();
+            syncTasks();
+          }
+        });
+      });
+
+      // 2. Inline Edit Description
+      const descElem = card.querySelector('.task-desc');
+      descElem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startInlineTextareaEdit(descElem, task.description || '', (newVal) => {
+          task.description = newVal.trim();
+          syncTasks();
+        });
+      });
+
+      // 3. Inline Cycle Priority on Click
+      const priorityElem = card.querySelector('.priority-badge');
+      priorityElem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const currentIdx = PRIORITY_ORDER.indexOf(task.priority);
+        const nextIdx = (currentIdx + 1) % PRIORITY_ORDER.length;
+        task.priority = PRIORITY_ORDER[nextIdx];
+        syncTasks();
+      });
+
+      // 4. Inline Edit Main Task Assignee (Wide pill, no label)
+      const assigneePill = card.querySelector('.task-assignee-pill');
+      assigneePill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showInlineMemberPicker(assigneePill, task.assignee || '', (newVal) => {
+          task.assignee = newVal;
+          syncTasks();
+        });
+      });
+
+      // 5. Inline Edit Supervisor (ناظر)
+      const supervisorPill = card.querySelector('.task-supervisor-pill');
+      supervisorPill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showInlineMemberPicker(supervisorPill, task.supervisor || '', (newVal) => {
+          task.supervisor = newVal;
+          syncTasks();
+        });
+      });
+
+      // 6. Delete Task
+      const deleteBtn = card.querySelector('.delete-task-btn');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`آیا از حذف کارت «${task.title}» مطمئن هستید؟`)) {
+          tasks = tasks.filter(t => t.id !== task.id);
+          syncTasks();
+        }
+      });
+
+      // 7. Move Previous / Next Column
+      const movePrevBtn = card.querySelector('.move-prev-btn');
+      movePrevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const colIdx = COLUMNS.findIndex(c => c.id === task.status);
+        if (colIdx > 0) {
+          task.status = COLUMNS[colIdx - 1].id;
+          syncTasks();
+        }
+      });
+
+      const moveNextBtn = card.querySelector('.move-next-btn');
+      moveNextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const colIdx = COLUMNS.findIndex(c => c.id === task.status);
+        if (colIdx < COLUMNS.length - 1) {
+          task.status = COLUMNS[colIdx + 1].id;
+          syncTasks();
+        }
+      });
+
+      // 8. Tags: Remove tag
+      card.querySelectorAll('.remove-tag-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const tagIdx = parseInt(btn.dataset.tagIdx, 10);
+          task.tags.splice(tagIdx, 1);
+          syncTasks();
+        });
+      });
+
+      // 9. Tags: Edit existing tag
+      card.querySelectorAll('.tag-text').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const tagIdx = parseInt(btn.dataset.tagIdx, 10);
+          startInlineTextEdit(btn, task.tags[tagIdx], (newVal) => {
+            if (newVal.trim()) {
+              task.tags[tagIdx] = newVal.trim();
+            } else {
+              task.tags.splice(tagIdx, 1);
+            }
+            syncTasks();
+          });
+        });
+      });
+
+      // 10. Tags: Add new tag inline with predefined datalist
+      const addTagBtn = card.querySelector('.add-tag-btn');
+      addTagBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startInlineTextEdit(addTagBtn, '', (newVal) => {
+          if (newVal.trim()) {
+            if (!task.tags) task.tags = [];
+            task.tags.push(newVal.trim());
+            // Also add to global tags if not present
+            if (!availableTags.includes(newVal.trim())) {
+              addNewTag(newVal.trim());
+            }
+            syncTasks();
+          }
+        }, 'تگ جدید...', 'predefinedTagsDatalist');
+      });
+
+      // 11. Subtasks Interactions
+      const subtaskItems = card.querySelectorAll('.subtask-item');
+      subtaskItems.forEach(item => {
+        const subId = item.dataset.subtaskId;
+        const sub = (task.subtasks || []).find(s => s.id === subId);
+        if (!sub) return;
+
+        // Toggle completed status
+        const checkbox = item.querySelector('.subtask-checkbox');
+        checkbox.addEventListener('change', (e) => {
+          e.stopPropagation();
+          sub.completed = checkbox.checked;
+          syncTasks();
+        });
+
+        // Edit subtask title inline
+        const titleSpan = item.querySelector('.subtask-title');
+        titleSpan.addEventListener('click', (e) => {
+          e.stopPropagation();
+          startInlineTextEdit(titleSpan, sub.title, (newVal) => {
+            if (newVal.trim()) {
+              sub.title = newVal.trim();
+              syncTasks();
+            }
+          });
+        });
+
+        // Quick delete subtask (ضربدر کوچک)
+        const delBtn = item.querySelector('.delete-subtask-btn');
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          task.subtasks = task.subtasks.filter(s => s.id !== sub.id);
+          syncTasks();
+        });
+
+        // Subtask assignee inline edit
+        const subAssigneePill = item.querySelector('.subtask-assignee-pill');
+        subAssigneePill.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showInlineMemberPicker(subAssigneePill, sub.assignee || '', (newAssignee) => {
+            sub.assignee = newAssignee;
+            syncTasks();
+          });
+        });
+      });
+
+      // 12. Add Subtask Inline Box
+      const addSubBtn = card.querySelector('.add-subtask-btn');
+      if (addSubBtn) {
+        addSubBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const wrapper = card.querySelector('.add-subtask-wrapper');
+          wrapper.innerHTML = `
+            <div class="flex items-center gap-1.5 p-1 bg-white rounded-lg border border-indigo-400 shadow-xs">
+              <input 
+                type="text" 
+                class="new-sub-input flex-1 text-xs p-1 rounded focus:outline-none" 
+                placeholder="عنوان سابتسک و Enter..." 
+                autofocus
+              >
+              <button class="save-new-sub px-2 py-0.5 text-[11px] bg-indigo-600 text-white rounded font-bold">ثبت</button>
+              <button class="cancel-new-sub px-1 text-[11px] text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+          `;
+          const input = wrapper.querySelector('.new-sub-input');
+          const saveBtn = wrapper.querySelector('.save-new-sub');
+          const cancelBtn = wrapper.querySelector('.cancel-new-sub');
+
+          input.focus();
+
+          const createSub = () => {
+            const title = input.value.trim();
+            if (title) {
+              if (!task.subtasks) task.subtasks = [];
+              task.subtasks.push({
+                id: 'sub-' + Date.now(),
+                title: title,
+                completed: false,
+                assignee: task.assignee || 'تعیین مسئول'
+              });
+              syncTasks();
+            } else {
+              renderBoard();
+            }
+          };
+
+          saveBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            createSub();
+          });
+
+          cancelBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            renderBoard();
+          });
+
+          input.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+              ev.preventDefault();
+              createSub();
+            } else if (ev.key === 'Escape') {
+              renderBoard();
+            }
+          });
+        });
+      }
+    }
+
+    /**
+     * Helpers for In-place Text & Member Picker
+     */
+    function startInlineTextEdit(elem, currentVal, onSave, placeholder = '', datalistId = '') {
+      if (elem.querySelector('input')) return;
+
+      const originalHtml = elem.innerHTML;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = currentVal;
+      input.placeholder = placeholder;
+      if (datalistId) input.setAttribute('list', datalistId);
+      input.className = 'w-full text-xs px-1.5 py-0.5 border-2 border-indigo-500 rounded bg-white shadow-xs focus:outline-none';
+      
+      elem.innerHTML = '';
+      elem.appendChild(input);
+      input.focus();
+      input.select();
+
+      let finished = false;
+      const commit = () => {
+        if (finished) return;
+        finished = true;
+        onSave(input.value);
+      };
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commit();
+        } else if (e.key === 'Escape') {
+          finished = true;
+          elem.innerHTML = originalHtml;
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        commit();
+      });
+    }
+
+    function startInlineTextareaEdit(elem, currentVal, onSave) {
+      if (elem.querySelector('textarea')) return;
+
+      const originalHtml = elem.innerHTML;
+      const textarea = document.createElement('textarea');
+      textarea.value = currentVal;
+      textarea.rows = 2;
+      textarea.placeholder = 'توضیحات تسک...';
+      textarea.className = 'w-full text-xs p-1.5 border-2 border-indigo-500 rounded-md bg-white shadow-xs focus:outline-none';
+
+      elem.innerHTML = '';
+      elem.appendChild(textarea);
+      textarea.focus();
+
+      let finished = false;
+      const commit = () => {
+        if (finished) return;
+        finished = true;
+        onSave(textarea.value);
+      };
+
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          commit();
+        } else if (e.key === 'Escape') {
+          finished = true;
+          elem.innerHTML = originalHtml;
+        }
+      });
+
+      textarea.addEventListener('blur', () => {
+        commit();
+      });
+    }
+
+    function showInlineMemberPicker(elem, currentVal, onSelect) {
+      // Remove any existing active picker popovers
+      document.querySelectorAll('.member-picker-popover').forEach(p => p.remove());
+
+      // Create popover element
+      const popover = document.createElement('div');
+      popover.className = 'member-picker-popover fixed z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-2 min-w-[200px] max-h-72 overflow-y-auto text-xs flex flex-col gap-1';
+      
+      // Prevent drag and click bubbling
+      popover.addEventListener('mousedown', (e) => e.stopPropagation());
+      popover.addEventListener('click', (e) => e.stopPropagation());
+
+      // Header inside popover
+      const popHeader = document.createElement('div');
+      popHeader.className = 'text-[10px] font-bold text-slate-400 px-2 py-0.5 border-b border-slate-100 flex items-center justify-between';
+      popHeader.innerHTML = `<span>انتخاب مسئول</span><button type="button" class="close-pop-btn text-slate-400 hover:text-slate-700 text-sm">&times;</button>`;
+      popHeader.querySelector('.close-pop-btn').addEventListener('click', () => popover.remove());
+      popover.appendChild(popHeader);
+
+      // Add "بدون مسئول" option
+      const noneBtn = document.createElement('button');
+      noneBtn.type = 'button';
+      noneBtn.className = 'flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 font-medium text-right w-full transition';
+      noneBtn.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span><span>بدون مسئول</span>`;
+      noneBtn.addEventListener('click', () => {
+        popover.remove();
+        onSelect('تعیین مسئول');
+      });
+      popover.appendChild(noneBtn);
+
+      // Add all members with their colors
+      members.forEach(m => {
+        const mBtn = document.createElement('button');
+        mBtn.type = 'button';
+        mBtn.className = 'flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-slate-50 text-right w-full transition font-semibold';
+        const isSelected = m.name.trim().toLowerCase() === (currentVal || '').trim().toLowerCase();
+        if (isSelected) mBtn.classList.add('bg-indigo-50/80');
+
+        mBtn.innerHTML = `
+          <div class="flex items-center gap-2 truncate">
+            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${m.color};"></span>
+            <span style="color: ${m.color};">${escapeHtml(m.name)}</span>
+          </div>
+          ${isSelected ? '<span class="text-indigo-600 text-xs font-bold">✓</span>' : ''}
+        `;
+        mBtn.addEventListener('click', () => {
+          popover.remove();
+          onSelect(m.name);
+        });
+        popover.appendChild(mBtn);
+      });
+
+      // Divider
+      const divider = document.createElement('div');
+      divider.className = 'border-t border-slate-100 my-1';
+      popover.appendChild(divider);
+
+      // Quick add new member input inside popover
+      const addWrapper = document.createElement('div');
+      addWrapper.className = 'flex items-center gap-1 mt-0.5';
+      addWrapper.innerHTML = `
+        <input type="text" placeholder="نام جدید..." class="w-full text-xs p-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        <button type="button" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold whitespace-nowrap shadow-xs">ثبت</button>
+      `;
+      const newNameInput = addWrapper.querySelector('input');
+      const submitNewName = () => {
+        const val = newNameInput.value.trim();
+        if (val) {
+          if (!members.find(m => m.name.toLowerCase() === val.toLowerCase())) {
+            addNewMember(val);
+          }
+          popover.remove();
+          onSelect(val);
+        }
+      };
+      addWrapper.querySelector('button').addEventListener('click', submitNewName);
+      newNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitNewName();
+        }
+      });
+      popover.appendChild(addWrapper);
+
+      // Position the popover relative to elem using fixed positioning
+      document.body.appendChild(popover);
+      const rect = elem.getBoundingClientRect();
+      let top = rect.bottom + 4;
+      let left = rect.left;
+
+      const popRect = popover.getBoundingClientRect();
+      if (left + popRect.width > window.innerWidth - 12) {
+        left = window.innerWidth - popRect.width - 12;
+      }
+      if (left < 12) left = 12;
+
+      if (top + popRect.height > window.innerHeight - 12) {
+        top = rect.top - popRect.height - 4;
+      }
+      popover.style.top = `${top}px`;
+      popover.style.left = `${left}px`;
+
+      // Close handlers
+      const closeHandler = (e) => {
+        if (!popover.contains(e.target) && !elem.contains(e.target)) {
+          popover.remove();
+          cleanup();
+        }
+      };
+      const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+          popover.remove();
+          cleanup();
+        }
+      };
+      const cleanup = () => {
+        document.removeEventListener('click', closeHandler);
+        document.removeEventListener('keydown', keyHandler);
+      };
+
+      setTimeout(() => {
+        document.addEventListener('click', closeHandler);
+        document.addEventListener('keydown', keyHandler);
+      }, 20);
+    }
+
+    /**
+     * Drag & Drop Handlers
+     */
+    function handleDragStart(e) {
+      if (e.target.closest('input, textarea, select, button, .task-assignee-pill, .task-supervisor-pill, .subtask-assignee-pill')) {
+        e.preventDefault();
+        return;
+      }
+      draggedTaskId = this.dataset.taskId;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedTaskId);
+    }
+
+    function handleDragEnd() {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.task-list').forEach(list => list.classList.remove('drag-over'));
+      draggedTaskId = null;
+    }
+
+    function setupDragAndDropForColumns() {
+      document.querySelectorAll('.task-list').forEach(list => {
+        list.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          list.classList.add('drag-over');
+        });
+
+        list.addEventListener('dragleave', () => {
+          list.classList.remove('drag-over');
+        });
+
+        list.addEventListener('drop', (e) => {
+          e.preventDefault();
+          list.classList.remove('drag-over');
+          const targetColId = list.dataset.columnId;
+          const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId;
+
+          if (taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && task.status !== targetColId) {
+              task.status = targetColId;
+              syncTasks();
+            }
+          }
+        });
+      });
+    }
+
+    /**
+     * Quick-Add Task Box in Columns
+     */
+    function setupQuickAdd() {
+      document.querySelectorAll('.kanban-col').forEach(colElem => {
+        const colId = colElem.dataset.columnId;
+        const container = colElem.querySelector('.quick-add-container');
+        const openBtns = colElem.querySelectorAll('.open-quick-add, .quick-add-btn');
+
+        const showBox = () => {
+          container.classList.remove('hidden');
+          container.innerHTML = `
+            <div class="bg-white p-2.5 rounded-xl border-2 border-indigo-400 shadow-md">
+              <input 
+                type="text" 
+                class="quick-title-input w-full text-xs font-semibold p-1.5 border border-slate-200 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                placeholder="عنوان تسک جدید..." 
+                autofocus
+              >
+              <div class="flex items-center justify-between gap-1">
+                <select class="quick-priority-select text-[11px] p-1 border border-slate-200 rounded-lg text-slate-600 bg-slate-50">
+                  <option value="urgent">فوری</option>
+                  <option value="high">بالا</option>
+                  <option value="medium" selected>متوسط</option>
+                  <option value="low">پایین</option>
+                </select>
+                <div class="flex items-center gap-1">
+                  <button class="cancel-quick-add px-2 py-1 text-xs text-slate-500 hover:text-slate-800 rounded">انصراف</button>
+                  <button class="save-quick-add px-3 py-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs">افزودن</button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const input = container.querySelector('.quick-title-input');
+          const prioritySelect = container.querySelector('.quick-priority-select');
+          const saveBtn = container.querySelector('.save-quick-add');
+          const cancelBtn = container.querySelector('.cancel-quick-add');
+
+          input.focus();
+
+          const create = () => {
+            const title = input.value.trim();
+            if (!title) return;
+            const newTask = {
+              id: 'task-' + Date.now(),
+              title: title,
+              description: '',
+              status: colId,
+              priority: prioritySelect.value,
+              assignee: members.length > 0 ? members[0].name : 'بدون مسئول',
+              supervisor: 'ناظر',
+              tags: [],
+              subtasks: [],
+              createdAt: Date.now()
+            };
+            tasks.unshift(newTask);
+            container.classList.add('hidden');
+            container.innerHTML = '';
+            syncTasks();
+          };
+
+          saveBtn.addEventListener('click', create);
+          cancelBtn.addEventListener('click', () => {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+          });
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') create();
+            if (e.key === 'Escape') {
+              container.classList.add('hidden');
+              container.innerHTML = '';
+            }
+          });
+        };
+
+        openBtns.forEach(btn => btn.addEventListener('click', showBox));
+      });
+    }
+
+    /**
+     * Setup Event Listeners
+     */
+    function setupEventListeners() {
+      setupDragAndDropForColumns();
+      setupQuickAdd();
+
+      // Search & Filters
+      document.getElementById('searchInput').addEventListener('input', renderBoard);
+      document.getElementById('priorityFilter').addEventListener('change', renderBoard);
+
+      // Dropdown Menu & Top-Left Actions
+      const menuBtn = document.getElementById('menuToggleBtn');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      const membersTagsDrawer = document.getElementById('membersTagsDrawer');
+      const settingsBanner = document.getElementById('firebaseSettingsBanner');
+
+      menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (dropdownMenu && !dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+          dropdownMenu.classList.add('hidden');
+        }
+      });
+
+      // Menu Item: Members & Tags
+      document.getElementById('menuItemMembersTags').addEventListener('click', () => {
+        dropdownMenu.classList.add('hidden');
+        membersTagsDrawer.classList.toggle('hidden');
+        if (!membersTagsDrawer.classList.contains('hidden')) {
+          renderMembersDrawer();
+          renderTagsDrawer();
+        }
+      });
+      document.getElementById('closeMembersTagsBtn').addEventListener('click', () => {
+        membersTagsDrawer.classList.add('hidden');
+      });
+
+      // Add Member Button in Drawer
+      document.getElementById('addMemberBtn').addEventListener('click', () => {
+        const input = document.getElementById('newMemberNameInput');
+        if (input.value.trim()) {
+          addNewMember(input.value.trim());
+          input.value = '';
+        }
+      });
+      document.getElementById('newMemberNameInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('addMemberBtn').click();
+        }
+      });
+
+      // Add Tag Button in Drawer
+      document.getElementById('addTagBtn').addEventListener('click', () => {
+        const input = document.getElementById('newTagNameInput');
+        if (input.value.trim()) {
+          addNewTag(input.value.trim());
+          input.value = '';
+        }
+      });
+      document.getElementById('newTagNameInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('addTagBtn').click();
+        }
+      });
+
+      // Menu Item: Firebase Settings
+      document.getElementById('menuItemFirebase').addEventListener('click', () => {
+        dropdownMenu.classList.add('hidden');
+        settingsBanner.classList.toggle('hidden');
+      });
+      document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+        settingsBanner.classList.add('hidden');
+      });
+
+      // Menu Item: Export PDF
+      document.getElementById('menuItemExportPdf').addEventListener('click', () => {
+        dropdownMenu.classList.add('hidden');
+        window.print();
+      });
+
+      // Menu Item: Export JSON
+      document.getElementById('menuItemExportJson').addEventListener('click', () => {
+        dropdownMenu.classList.add('hidden');
+        const exportData = {
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          tasks: tasks,
+          members: members,
+          tags: availableTags
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `kanban-backup-${new Date().toISOString().slice(0, 10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      });
+
+      // Import JSON
+      document.getElementById('importJsonInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const imported = JSON.parse(event.target.result);
+            if (Array.isArray(imported)) {
+              if (confirm(`آیا مایلید ${imported.length} تسک از فایل JSON بارگذاری شود؟`)) {
+                tasks = imported;
+                syncTasks();
+                alert('تسک‌ها با موفقیت بازخوانی شدند.');
+              }
+            } else if (imported && imported.tasks && Array.isArray(imported.tasks)) {
+              if (confirm(`فایل پشتیبان کامل کانبان شناسایی شد. آیا مایلید تمام تسک‌ها، اعضا و تگ‌ها بازیابی شوند؟`)) {
+                tasks = imported.tasks;
+                if (imported.members && Array.isArray(imported.members)) {
+                  members = imported.members;
+                  syncMembers();
+                }
+                if (imported.tags && Array.isArray(imported.tags)) {
+                  availableTags = imported.tags;
+                  syncTags();
+                }
+                syncTasks();
+                alert('اطلاعات کامل بورد با موفقیت بازخوانی و به‌روزرسانی شد.');
+              }
+            } else {
+              alert('قالب فایل JSON معتبر نیست.');
+            }
+          } catch (err) {
+            alert('خطا در خواندن فایل JSON: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      // Save Firebase Config
+      document.getElementById('saveFbConfigBtn').addEventListener('click', () => {
+        const rawJson = document.getElementById('fbConfigRaw').value.trim();
+        const dbUrl = document.getElementById('fbDbUrl').value.trim();
+        const apiKey = document.getElementById('fbApiKey').value.trim();
+
+        let configObj = null;
+        if (rawJson) {
+          try {
+            configObj = JSON.parse(rawJson);
+          } catch (e) {
+            alert('متن وارد شده در بخش کانفیگ خام، یک JSON معتبر نیست.');
+            return;
+          }
+        } else if (dbUrl) {
+          configObj = {
+            databaseURL: dbUrl,
+            apiKey: apiKey || 'dummy-key-for-open-rules'
+          };
+        } else {
+          alert('لطفاً حداقل آدرس دیتابیس (databaseURL) را وارد کنید.');
+          return;
+        }
+
+        localStorage.removeItem('kanban_firebase_disabled');
+        localStorage.setItem('kanban_firebase_config', JSON.stringify(configObj));
+        initFirebase(configObj);
+        settingsBanner.classList.add('hidden');
+        alert('کانفیگ فایربیس ذخیره شد و تلاش برای برقراری ارتباط آغاز گردید.');
+      });
+
+      // Disconnect Firebase
+      document.getElementById('disconnectFbBtn').addEventListener('click', () => {
+        if (confirm('آیا از قطع ارتباط فایربیس و سوئیچ به حافظه محلی اطمینان دارید؟')) {
+          localStorage.setItem('kanban_firebase_disabled', 'true');
+          localStorage.removeItem('kanban_firebase_config');
+          if (firebaseApp) {
+            firebase.app().delete();
+            firebaseApp = null;
+            firebaseDb = null;
+          }
+          isFirebaseConnected = false;
+          setSyncStatus('offline', 'حافظه محلی (آفلاین)');
+          settingsBanner.classList.add('hidden');
+        }
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Start App on DOM Ready
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
