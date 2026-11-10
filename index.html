@@ -114,22 +114,22 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.07),rgba(255,255,255,0))]">
 
   <!-- Datalist for Predefined Tags Autocomplete -->
   <datalist id="predefinedTagsDatalist"></datalist>
 
   <!-- Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-    <div class="max-w-[1920px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+  <header class="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+    <div class="max-w-[1920px] mx-auto px-5 py-3 flex flex-wrap items-center justify-between gap-4">
       
       <!-- Title -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-indigo-200">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-indigo-500/25">
           📋
         </div>
         <div>
-          <h1 class="text-lg font-extrabold text-slate-900 tracking-tight">کارهای طرح و برنامه</h1>
+          <h1 class="text-lg font-black text-slate-900 tracking-tight">کارهای طرح و برنامه</h1>
           <!-- Hidden indicators to keep background logic clean & error-free -->
           <span id="syncIndicator" class="hidden"><span id="syncStatusDot"></span><span id="syncStatusText"></span></span>
           <span id="taskCountBadge" class="hidden"></span>
@@ -137,22 +137,22 @@
       </div>
 
       <!-- Search & Filters -->
-      <div class="flex flex-1 max-w-xl items-center gap-2">
+      <div class="flex flex-1 max-w-xl items-center gap-2.5">
         <div class="relative w-full">
           <input 
             type="text" 
             id="searchInput" 
             placeholder="جستجو در عنوان، تگ، مسئول، ناظر، سابتسک..." 
-            class="w-full pl-3 pr-9 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"
+            class="w-full pl-3 pr-9 py-2 text-xs bg-slate-100/80 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all placeholder:text-slate-400"
           >
-          <span class="absolute right-3 top-2 text-slate-400">🔍</span>
+          <span class="absolute right-3 top-2.5 text-slate-400 text-xs">🔍</span>
         </div>
-        <select id="priorityFilter" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-600">
+        <select id="priorityFilter" class="text-xs bg-slate-100/80 border border-slate-200/80 rounded-xl px-3 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none text-slate-700 cursor-pointer font-medium transition-all">
           <option value="all">همه اولویت‌ها</option>
-          <option value="urgent">فوری</option>
-          <option value="high">بالا</option>
-          <option value="medium">متوسط</option>
-          <option value="low">پایین</option>
+          <option value="urgent">🔥 فوری</option>
+          <option value="high">⚡ بالا</option>
+          <option value="medium">🔹 متوسط</option>
+          <option value="low">⚪ پایین</option>
         </select>
       </div>
 
@@ -160,7 +160,7 @@
       <div class="relative">
         <button 
           id="menuToggleBtn" 
-          class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xl transition shadow-xs"
+          class="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100/90 hover:bg-slate-200/90 text-slate-700 font-extrabold text-xl transition-all shadow-xs active:scale-95"
           title="منوی تنظیمات و امکانات">
           ⋮
         </button>
@@ -168,35 +168,37 @@
         <!-- Dropdown Menu -->
         <div 
           id="dropdownMenu" 
-          class="hidden absolute left-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs flex flex-col transition-all">
+          class="hidden absolute left-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_12px_36px_-4px_rgba(0,0,0,0.12)] border border-slate-200/80 py-2 z-50 text-xs flex flex-col transition-all divide-y divide-slate-100">
           
-          <button id="menuItemMembersTags" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
-            <span class="text-base">👥</span>
-            <span>افراد و تگ‌ها</span>
-          </button>
+          <div class="py-1">
+            <button id="menuItemMembersTags" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+              <span class="text-base">👥</span>
+              <span>مدیریت افراد و تگ‌ها</span>
+            </button>
 
-          <button id="menuItemFirebase" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
-            <span class="text-base">🔥</span>
-            <span>اتصال به فایربیس</span>
-          </button>
+            <button id="menuItemFirebase" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+              <span class="text-base">🔥</span>
+              <span>تنظیمات پایگاه‌داده فایربیس</span>
+            </button>
+          </div>
 
-          <div class="border-t border-slate-100 my-1"></div>
+          <div class="py-1">
+            <button id="menuItemExportPdf" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-indigo-50 text-indigo-700 font-bold text-right w-full transition">
+              <span class="text-base">📄</span>
+              <span>خروجی نسخه چاپی / PDF</span>
+            </button>
 
-          <button id="menuItemExportPdf" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-indigo-50 text-indigo-700 font-bold text-right w-full transition">
-            <span class="text-base">📄</span>
-            <span>خروجی PDF (چاپ)</span>
-          </button>
+            <button id="menuItemExportJson" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+              <span class="text-base">⬇️</span>
+              <span>دانلود فایل پشتیبان JSON</span>
+            </button>
 
-          <button id="menuItemExportJson" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
-            <span class="text-base">⬇️</span>
-            <span>دانلود نسخه JSON</span>
-          </button>
-
-          <label class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium cursor-pointer">
-            <span class="text-base">⬆️</span>
-            <span>بارگذاری نسخه JSON</span>
-            <input type="file" id="importJsonInput" accept=".json" class="hidden">
-          </label>
+            <label class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium cursor-pointer">
+              <span class="text-base">⬆️</span>
+              <span>بازیابی از فایل JSON</span>
+              <input type="file" id="importJsonInput" accept=".json" class="hidden">
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -339,76 +341,76 @@
   </header>
 
   <!-- Main Kanban Board -->
-  <main class="flex-1 p-4 overflow-x-auto">
-    <div id="boardContainer" class="flex gap-4 min-w-[1100px] items-start pb-16">
+  <main class="flex-1 p-5 overflow-x-auto">
+    <div id="boardContainer" class="flex gap-5 min-w-[1140px] items-start pb-20">
       
       <!-- 1. جدید -->
-      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="new">
-        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-100/75 backdrop-blur-xs rounded-3xl p-3.5 border border-slate-200/80 shadow-xs transition-all duration-200" data-column-id="new">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2.5">
           <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-sky-500"></span>
-            <h2 class="font-bold text-slate-800 text-sm">جدید</h2>
-            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+            <h2 class="font-extrabold text-slate-800 text-sm">جدید</h2>
+            <span class="col-count text-xs font-bold px-2.5 py-0.5 bg-white text-slate-700 rounded-full border border-slate-200 shadow-2xs">0</span>
           </div>
-          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+          <button class="quick-add-btn text-xs w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-2xs font-bold" title="افزودن سریع تسک">+</button>
         </div>
-        <div class="quick-add-container hidden mb-2"></div>
-        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="new"></div>
-        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+        <div class="quick-add-container hidden mb-2.5"></div>
+        <div class="task-list flex-1 space-y-3 p-1 rounded-2xl transition min-h-[140px]" data-column-id="new"></div>
+        <button class="open-quick-add mt-3 w-full py-2.5 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-indigo-400 hover:shadow-xs">
           <span>+</span>
           <span>افزودن کارت</span>
         </button>
       </div>
 
       <!-- 2. در حال انجام -->
-      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="in_progress">
-        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-100/75 backdrop-blur-xs rounded-3xl p-3.5 border border-slate-200/80 shadow-xs transition-all duration-200" data-column-id="in_progress">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2.5">
           <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-            <h2 class="font-bold text-slate-800 text-sm">در حال انجام</h2>
-            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+            <h2 class="font-extrabold text-slate-800 text-sm">در حال انجام</h2>
+            <span class="col-count text-xs font-bold px-2.5 py-0.5 bg-white text-slate-700 rounded-full border border-slate-200 shadow-2xs">0</span>
           </div>
-          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+          <button class="quick-add-btn text-xs w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-2xs font-bold" title="افزودن سریع تسک">+</button>
         </div>
-        <div class="quick-add-container hidden mb-2"></div>
-        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="in_progress"></div>
-        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+        <div class="quick-add-container hidden mb-2.5"></div>
+        <div class="task-list flex-1 space-y-3 p-1 rounded-2xl transition min-h-[140px]" data-column-id="in_progress"></div>
+        <button class="open-quick-add mt-3 w-full py-2.5 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-indigo-400 hover:shadow-xs">
           <span>+</span>
           <span>افزودن کارت</span>
         </button>
       </div>
 
       <!-- 3. منتظر تسک دیگر -->
-      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="waiting">
-        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-100/75 backdrop-blur-xs rounded-3xl p-3.5 border border-slate-200/80 shadow-xs transition-all duration-200" data-column-id="waiting">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2.5">
           <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-            <h2 class="font-bold text-slate-800 text-sm">منتظر تسک دیگر</h2>
-            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
+            <h2 class="font-extrabold text-slate-800 text-sm">منتظر تسک دیگر</h2>
+            <span class="col-count text-xs font-bold px-2.5 py-0.5 bg-white text-slate-700 rounded-full border border-slate-200 shadow-2xs">0</span>
           </div>
-          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+          <button class="quick-add-btn text-xs w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-2xs font-bold" title="افزودن سریع تسک">+</button>
         </div>
-        <div class="quick-add-container hidden mb-2"></div>
-        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="waiting"></div>
-        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+        <div class="quick-add-container hidden mb-2.5"></div>
+        <div class="task-list flex-1 space-y-3 p-1 rounded-2xl transition min-h-[140px]" data-column-id="waiting"></div>
+        <button class="open-quick-add mt-3 w-full py-2.5 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-indigo-400 hover:shadow-xs">
           <span>+</span>
           <span>افزودن کارت</span>
         </button>
       </div>
 
       <!-- 4. انجام شده -->
-      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-200/70 rounded-2xl p-2.5 border border-slate-300/60 shadow-xs" data-column-id="done">
-        <div class="flex items-center justify-between px-2 py-1.5 mb-2">
+      <div class="kanban-col w-80 flex-shrink-0 flex flex-col bg-slate-100/75 backdrop-blur-xs rounded-3xl p-3.5 border border-slate-200/80 shadow-xs transition-all duration-200" data-column-id="done">
+        <div class="flex items-center justify-between px-2 py-1.5 mb-2.5">
           <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-            <h2 class="font-bold text-slate-800 text-sm">انجام شده</h2>
-            <span class="col-count text-xs font-semibold px-2 py-0.5 bg-slate-300/80 rounded-full text-slate-700">0</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+            <h2 class="font-extrabold text-slate-800 text-sm">انجام شده</h2>
+            <span class="col-count text-xs font-bold px-2.5 py-0.5 bg-white text-slate-700 rounded-full border border-slate-200 shadow-2xs">0</span>
           </div>
-          <button class="quick-add-btn text-xs p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-300 rounded transition" title="افزودن سریع تسک">+</button>
+          <button class="quick-add-btn text-xs w-6 h-6 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-white rounded-lg transition-all shadow-2xs font-bold" title="افزودن سریع تسک">+</button>
         </div>
-        <div class="quick-add-container hidden mb-2"></div>
-        <div class="task-list flex-1 space-y-2.5 p-1 rounded-xl transition min-h-[120px]" data-column-id="done"></div>
-        <button class="open-quick-add mt-2 w-full py-1.5 text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition flex items-center justify-center gap-1.5 border border-dashed border-slate-300">
+        <div class="quick-add-container hidden mb-2.5"></div>
+        <div class="task-list flex-1 space-y-3 p-1 rounded-2xl transition min-h-[140px]" data-column-id="done"></div>
+        <button class="open-quick-add mt-3 w-full py-2.5 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-2xl transition-all flex items-center justify-center gap-1.5 border border-dashed border-slate-300 hover:border-indigo-400 hover:shadow-xs">
           <span>+</span>
           <span>افزودن کارت</span>
         </button>
@@ -430,10 +432,10 @@
     ];
 
     const PRIORITIES = {
-      urgent: { label: 'فوری', bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-300' },
-      high:   { label: 'بالا',  bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-300' },
-      medium: { label: 'متوسط', bg: 'bg-blue-100',  text: 'text-blue-700',  border: 'border-blue-300' },
-      low:    { label: 'پایین', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-300' },
+      urgent: { label: 'فوری', icon: '🔥', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+      high:   { label: 'بالا',  icon: '⚡', bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-200' },
+      medium: { label: 'متوسط', icon: '🔹', bg: 'bg-blue-50',  text: 'text-blue-700',  border: 'border-blue-200' },
+      low:    { label: 'پایین', icon: '⚪', bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' },
     };
 
     const PRIORITY_ORDER = ['urgent', 'high', 'medium', 'low'];
@@ -1015,7 +1017,7 @@
       const supervisorColor = getMemberColor(task.supervisor);
       
       const card = document.createElement('div');
-      card.className = 'task-card bg-white rounded-xl p-3 shadow-xs hover:shadow-md border border-slate-200/90 transition group cursor-grab active:cursor-grabbing relative';
+      card.className = 'task-card bg-white rounded-2xl p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_24px_-4px_rgba(0,0,0,0.08),0_4px_8px_-2px_rgba(0,0,0,0.02)] border border-slate-200/80 transition-all duration-200 group cursor-grab active:cursor-grabbing relative hover:-translate-y-0.5';
       card.draggable = true;
       card.dataset.taskId = task.id;
 
@@ -1025,7 +1027,7 @@
       // Render Tags
       const tagsList = task.tags || [];
       const tagsHtml = tagsList.map((tag, idx) => `
-        <span class="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+        <span class="inline-flex items-center gap-1 text-[11px] font-bold bg-slate-100/90 text-slate-700 px-2.5 py-0.5 rounded-lg border border-slate-200/80 hover:bg-slate-200 transition-all">
           <span class="tag-text cursor-pointer hover:underline" data-tag-idx="${idx}" title="کلیک برای ویرایش">${escapeHtml(tag)}</span>
           <button class="remove-tag-btn text-slate-400 hover:text-rose-600 font-bold leading-none" data-tag-idx="${idx}" title="حذف تگ">&times;</button>
         </span>
@@ -1041,28 +1043,28 @@
       const subtasksHtml = subtasks.map(sub => {
         const subAssigneeColor = getMemberColor(sub.assignee);
         return `
-          <div class="subtask-item bg-white p-1.5 rounded-lg border border-slate-200/80 shadow-2xs group/sub flex flex-col gap-1 transition" data-subtask-id="${sub.id}">
+          <div class="subtask-item bg-white p-2 rounded-xl border border-slate-200/80 shadow-2xs group/sub flex flex-col gap-1.5 transition-all hover:border-slate-300" data-subtask-id="${sub.id}">
             <!-- Top Row: Checkbox + Title + Delete Cross -->
             <div class="flex items-center gap-1.5 justify-between">
-              <label class="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer select-none">
-                <input type="checkbox" class="subtask-checkbox rounded text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600" ${sub.completed ? 'checked' : ''}>
-                <span class="subtask-title text-xs ${sub.completed ? 'line-through text-slate-400' : 'text-slate-800 font-medium'} truncate cursor-pointer hover:text-indigo-600" title="کلیک برای ویرایش سابتسک">
+              <label class="flex items-center gap-2 flex-1 min-w-0 cursor-pointer select-none">
+                <input type="checkbox" class="subtask-checkbox rounded text-indigo-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer accent-indigo-600 transition" ${sub.completed ? 'checked' : ''}>
+                <span class="subtask-title text-xs ${sub.completed ? 'line-through text-slate-400' : 'text-slate-800 font-semibold'} truncate cursor-pointer hover:text-indigo-600 transition" title="کلیک برای ویرایش سابتسک">
                   ${escapeHtml(sub.title || 'بدون عنوان')}
                 </span>
               </label>
-              <button class="delete-subtask-btn text-slate-300 hover:text-rose-600 font-bold text-sm px-1 leading-none rounded hover:bg-rose-50 transition" title="حذف سریع سابتسک">&times;</button>
+              <button class="delete-subtask-btn text-slate-300 hover:text-rose-600 font-bold text-sm px-1.5 leading-none rounded hover:bg-rose-50 transition" title="حذف سریع سابتسک">&times;</button>
             </div>
             
             <!-- Bottom Row: Assignee directly underneath subtask -->
-            <div class="flex items-center justify-between text-[10px] text-slate-500 pl-1 pr-5">
+            <div class="flex items-center justify-between text-[10px] text-slate-500 pl-1 pr-5.5">
               <div 
-                class="subtask-assignee-pill flex items-center gap-1 cursor-pointer hover:opacity-85 px-1.5 py-0.5 rounded transition border"
+                class="subtask-assignee-pill flex items-center gap-1.5 cursor-pointer hover:opacity-85 px-2 py-0.5 rounded-md transition border text-[10px] font-bold"
                 style="background-color: ${subAssigneeColor}15; color: ${subAssigneeColor}; border-color: ${subAssigneeColor}40;"
                 title="کلیک برای تغییر مسئول سابتسک"
               >
                 <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${subAssigneeColor};"></span>
                 <span class="subtask-assignee font-medium">${escapeHtml(sub.assignee || 'تعیین مسئول')}</span>
-                <span class="text-[9px] opacity-60">▼</span>
+                <span class="text-[8px] opacity-60">▼</span>
               </div>
             </div>
           </div>
@@ -1071,56 +1073,56 @@
 
       card.innerHTML = `
         <!-- Card Top Bar: Priority Badge & Move/Delete Controls -->
-        <div class="flex items-center justify-between mb-2 gap-1">
+        <div class="flex items-center justify-between mb-2.5 gap-1">
           <!-- Priority Badge -->
           <div 
-            class="priority-badge text-[11px] font-bold px-2 py-0.5 rounded-md border cursor-pointer select-none transition hover:opacity-80 flex items-center gap-1 ${priorityMeta.bg} ${priorityMeta.text} ${priorityMeta.border}" 
+            class="priority-badge text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg border cursor-pointer select-none transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 shadow-2xs ${priorityMeta.bg} ${priorityMeta.text} ${priorityMeta.border}" 
             title="کلیک برای تغییر اولویت"
           >
-            <span>⚡</span>
+            <span>${priorityMeta.icon || '⚡'}</span>
             <span class="priority-label">${priorityMeta.label}</span>
           </div>
 
-          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-            <button class="move-prev-btn text-xs text-slate-400 hover:text-indigo-600 px-1 py-0.5 rounded hover:bg-slate-100" title="انتقال به ستون قبلی">◀</button>
-            <button class="move-next-btn text-xs text-slate-400 hover:text-indigo-600 px-1 py-0.5 rounded hover:bg-slate-100" title="انتقال به ستون بعدی">▶</button>
-            <button class="delete-task-btn text-slate-400 hover:text-rose-600 px-1 py-0.5 rounded hover:bg-rose-50 text-xs transition" title="حذف کارت">🗑️</button>
+          <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150">
+            <button class="move-prev-btn text-xs text-slate-400 hover:text-indigo-600 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 transition" title="انتقال به ستون قبلی">◀</button>
+            <button class="move-next-btn text-xs text-slate-400 hover:text-indigo-600 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-100 transition" title="انتقال به ستون بعدی">▶</button>
+            <button class="delete-task-btn text-slate-400 hover:text-rose-600 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-rose-50 text-xs transition" title="حذف کارت">🗑️</button>
           </div>
         </div>
 
         <!-- Task Title -->
-        <div class="task-title text-sm font-bold text-slate-900 mb-1 cursor-pointer hover:bg-slate-50 p-1 rounded -m-1 transition leading-snug break-words" title="کلیک برای ویرایش عنوان">
+        <div class="task-title text-sm font-extrabold text-slate-900 mb-1.5 cursor-pointer hover:text-indigo-600 p-1 -m-1 rounded-lg transition-colors leading-snug break-words tracking-tight" title="کلیک برای ویرایش عنوان">
           ${escapeHtml(task.title || 'بدون عنوان')}
         </div>
 
         <!-- Task Description -->
-        <div class="task-desc text-xs text-slate-500 mb-2 cursor-pointer hover:bg-slate-50 p-1 rounded -m-1 transition min-h-[1.2rem] break-words whitespace-pre-wrap" title="کلیک برای ویرایش توضیحات">
+        <div class="task-desc text-xs text-slate-500 mb-3 cursor-pointer hover:text-slate-800 p-1 -m-1 rounded-lg transition-colors min-h-[1.2rem] break-words whitespace-pre-wrap leading-relaxed" title="کلیک برای ویرایش توضیحات">
           ${escapeHtml(task.description || 'افزودن توضیحات...')}
         </div>
 
         <!-- Subtasks Section (Attached to card) -->
-        <div class="subtasks-container mb-2.5 bg-slate-50/90 rounded-xl p-2 border border-slate-200/60">
-          <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-1.5">
-            <div class="flex items-center gap-1">
+        <div class="subtasks-container mb-3 bg-slate-50/75 rounded-2xl p-2.5 border border-slate-200/70">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 mb-2">
+            <div class="flex items-center gap-1.5">
               <span>☑️</span>
               <span>سابتسک‌ها</span>
-              <span class="text-[10px] text-slate-400 font-normal">(${completedSubs}/${totalSubs})</span>
+              <span class="text-[10px] text-slate-400 font-medium">(${completedSubs}/${totalSubs})</span>
             </div>
             <!-- Progress Bar -->
             ${totalSubs > 0 ? `
-              <div class="w-14 bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: ${progressPercent}%;"></div>
+              <div class="w-16 bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-500 to-violet-600 h-1.5 rounded-full transition-all duration-300" style="width: ${progressPercent}%;"></div>
               </div>
             ` : ''}
           </div>
 
-          <div class="subtask-list space-y-1.5 mb-1.5">
+          <div class="subtask-list space-y-1.5 mb-2">
             ${subtasksHtml}
           </div>
 
           <!-- Add Subtask Inline Button & Container -->
           <div class="add-subtask-wrapper">
-            <button class="add-subtask-btn w-full py-1 text-[11px] font-semibold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-lg transition flex items-center justify-center gap-1 border border-dashed border-slate-300 bg-white/60">
+            <button class="add-subtask-btn w-full py-1.5 text-[11px] font-bold text-slate-500 hover:text-indigo-600 hover:bg-white rounded-xl transition-all flex items-center justify-center gap-1 border border-dashed border-slate-300 bg-white/80 hover:shadow-2xs">
               <span>+</span>
               <span>افزودن سابتسک</span>
             </button>
@@ -1128,22 +1130,22 @@
         </div>
 
         <!-- Tags Area -->
-        <div class="flex flex-wrap items-center gap-1.5 mb-3">
+        <div class="flex flex-wrap items-center gap-1.5 mb-3.5">
           ${tagsHtml}
-          <button class="add-tag-btn inline-flex items-center gap-0.5 text-[10px] text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-dashed border-slate-300 hover:border-indigo-300 px-1.5 py-0.5 rounded-md transition" title="افزودن تگ">
+          <button class="add-tag-btn inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-dashed border-slate-300 hover:border-indigo-300 px-2 py-0.5 rounded-lg transition-all" title="افزودن تگ">
             <span>+ تگ</span>
           </button>
         </div>
 
         <!-- Footer: Responsible Member (Wide Pill, No 'اساینی' label) & Supervisor (ناظر) -->
-        <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
           <!-- Responsible Person (No 'اساینی' label, wide, member color) -->
           <div class="flex items-center gap-1.5 flex-1 min-w-[130px]" title="کلیک برای تغییر فرد مسئول">
             <div 
-              class="task-assignee-pill flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold cursor-pointer transition shadow-2xs w-full justify-between hover:opacity-90" 
+              class="task-assignee-pill flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold cursor-pointer transition-all shadow-2xs w-full justify-between hover:shadow-xs active:scale-98" 
               style="background-color: ${assigneeColor}15; color: ${assigneeColor}; border-color: ${assigneeColor}40;"
             >
-              <div class="flex items-center gap-1.5 truncate">
+              <div class="flex items-center gap-2 truncate">
                 <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${assigneeColor};"></span>
                 <span class="task-assignee-text truncate">${escapeHtml(task.assignee || 'تعیین مسئول')}</span>
               </div>
@@ -1152,10 +1154,10 @@
           </div>
 
           <!-- Supervisor (ناظر) -->
-          <div class="task-supervisor-pill flex items-center gap-1 text-[11px] text-slate-500 cursor-pointer hover:bg-slate-100 px-1.5 py-1 rounded-md transition" title="کلیک برای تغییر ناظر">
+          <div class="task-supervisor-pill flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer hover:bg-slate-100 px-2 py-1.5 rounded-xl transition font-medium" title="کلیک برای تغییر ناظر">
             <span>👁️</span>
             <span class="text-slate-400 text-[10px]">ناظر:</span>
-            <span class="task-supervisor-text font-semibold truncate max-w-[85px]" style="color: ${supervisorColor};">
+            <span class="task-supervisor-text font-bold truncate max-w-[90px]" style="color: ${supervisorColor};">
               ${escapeHtml(task.supervisor || 'نامشخص')}
             </span>
           </div>
@@ -1486,7 +1488,7 @@
 
       // Create popover element
       const popover = document.createElement('div');
-      popover.className = 'member-picker-popover fixed z-50 bg-white border border-slate-200 rounded-xl shadow-2xl p-2 min-w-[200px] max-h-72 overflow-y-auto text-xs flex flex-col gap-1';
+      popover.className = 'member-picker-popover fixed z-50 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.18)] p-2.5 min-w-[210px] max-h-80 overflow-y-auto text-xs flex flex-col gap-1 transition-all';
       
       // Prevent drag and click bubbling
       popover.addEventListener('mousedown', (e) => e.stopPropagation());
@@ -1667,23 +1669,23 @@
         const showBox = () => {
           container.classList.remove('hidden');
           container.innerHTML = `
-            <div class="bg-white p-2.5 rounded-xl border-2 border-indigo-400 shadow-md">
+            <div class="bg-white p-3 rounded-2xl border-2 border-indigo-500 shadow-xl transition-all">
               <input 
                 type="text" 
-                class="quick-title-input w-full text-xs font-semibold p-1.5 border border-slate-200 rounded-lg mb-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                class="quick-title-input w-full text-xs font-bold p-2 border border-slate-200 rounded-xl mb-2.5 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none placeholder:text-slate-400"
                 placeholder="عنوان تسک جدید..." 
                 autofocus
               >
-              <div class="flex items-center justify-between gap-1">
-                <select class="quick-priority-select text-[11px] p-1 border border-slate-200 rounded-lg text-slate-600 bg-slate-50">
-                  <option value="urgent">فوری</option>
-                  <option value="high">بالا</option>
-                  <option value="medium" selected>متوسط</option>
-                  <option value="low">پایین</option>
+              <div class="flex items-center justify-between gap-1.5">
+                <select class="quick-priority-select text-[11px] font-semibold px-2 py-1.5 border border-slate-200 rounded-lg text-slate-700 bg-slate-50 focus:outline-none cursor-pointer">
+                  <option value="urgent">🔥 فوری</option>
+                  <option value="high">⚡ بالا</option>
+                  <option value="medium" selected>🔹 متوسط</option>
+                  <option value="low">⚪ پایین</option>
                 </select>
-                <div class="flex items-center gap-1">
-                  <button class="cancel-quick-add px-2 py-1 text-xs text-slate-500 hover:text-slate-800 rounded">انصراف</button>
-                  <button class="save-quick-add px-3 py-1 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-xs">افزودن</button>
+                <div class="flex items-center gap-1.5">
+                  <button class="cancel-quick-add px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800 font-semibold rounded-lg transition">انصراف</button>
+                  <button class="save-quick-add px-3.5 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition active:scale-95">افزودن</button>
                 </div>
               </div>
             </div>
