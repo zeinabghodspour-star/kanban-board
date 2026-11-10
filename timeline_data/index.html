@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تایم‌لاین و برنامه‌ریزی جامع اردو - راه روشن</title>
+    <!-- Google Fonts: Vazirmatn -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Vazirmatn', 'Tahoma', 'Segoe UI', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            user-select: none;
+        }
+        input, textarea, select {
+            user-select: text;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Dynamic Grid Background */
+        .timeline-grid-bg {
+            background-repeat: repeat-x;
+            background-position: right top;
+        }
+
+        /* Resize handles */
+        .resize-handle-left, .resize-handle-right {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            cursor: ew-resize;
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .resize-handle-left {
+            left: 0;
+            border-radius: 8px 0 0 8px;
+        }
+        .resize-handle-right {
+            right: 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .event-box:hover .resize-handle-left,
+        .event-box:hover .resize-handle-right {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .resize-handle-left::after, .resize-handle-right::after {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2px;
+            box-shadow: 0 0 2px rgba(0,0,0,0.4);
+        }
+
+        /* Tooltip when dragging/resizing */
+        #floatingTimeTooltip {
+            pointer-events: none;
+            transition: opacity 0.1s ease;
+        }
+
+        /* PRINT STYLES - CRITICAL FIX */
+        @page {
+            size: landscape;
+            margin: 8mm;
+        }
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            body {
+                background: white !important;
+                color: #0f172a !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .timeline-scroll-container {
+                overflow: visible !important;
+                width: 100% !important;
+                padding: 0 !important;
+            }
+            #timelineViewport {
+                min-width: 100% !important;
+                width: 100% !important;
+            }
+            .event-box {
+                box-shadow: none !important;
+                border: 1px solid rgba(0,0,0,0.3) !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .page-break {
+                page-break-after: always;
+                break-after: page;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Floating Tooltip during Drag / Resize -->
+    <div id="floatingTimeTooltip" class="fixed z-50 bg-slate-900/90 text-white text-xs font-mono font-bold px-3 py-1.5 rounded-lg shadow-xl opacity-0">
+        ۱۲:۰۰ - ۱۳:۳۰
+    </div>
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-sky-500/20">
+                    🧭
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span>تایم‌لاین و برنامه‌ریزی اردو</span>
+                        <span class="text-xs bg-sky-100 text-sky-700 font-medium px-2 py-0.5 rounded-full">راه روشن</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-500">از دوشنبه ۲۵ آبان (ظهر) تا جمعه ۲۹ آبان (ظهر)</p>
+                </div>
+            </div>
+
+            <!-- Global Action Controls -->
+            <div class="flex items-center flex-wrap gap-2">
+                <!-- Add Event Button -->
+                <button onclick="openNewEventModal()" class="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>افزودن برنامه جدید</span>
+                </button>
+
+                <!-- Category Manager Button -->
+                <button onclick="openCategoryManagerModal()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 transition" title="مدیریت و رنگ‌بندی دسته‌بندی‌ها">
+                    <span>🎨</span>
+                    <span>دسته‌بندی‌ها</span>
+                </button>
+
+                <!-- Zoom Controls -->
+                <div id="zoomControlsContainer" class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 text-xs">
+                    <button onclick="changeZoom(-1)" class="px-2.5 py-1 rounded hover:bg-white text-slate-700 font-bold" title="کوچک‌نمایی">−</button>
+                    <span id="zoomLevelText" class="px-2 font-mono font-bold text-slate-800 text-[11px]">100%</span>
+                    <button onclick="changeZoom(1)" class="px-2.5 py-1 rounded hover:bg-white text-slate-700 font-bold" title="بزرگ‌نمایی">+</button>
+                </div>
+
+                <!-- Export/Import & Print Buttons -->
+                <div class="flex items-center gap-1 border-r border-slate-200 pr-2 mr-1">
+                    <button onclick="saveToFile()" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 transition" title="دانلود فایل پشتیبان (JSON)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                    <label class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer" title="بارگذاری فایل پشتیبان">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <input type="file" accept=".json" class="hidden" onchange="loadFromFile(event)">
+                    </label>
+                    <button onclick="triggerPrint()" class="flex items-center gap-1 bg-emerald-600 text-white hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" title="چاپ یا ذخیره بصورت PDF">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>چاپ / PDF</span>
+                    </button>
+                    <button onclick="openCloudSettingsModal()" class="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 transition" title="تنظیمات سرور ابری (Cloudflare Worker)">
+                        <span>☁️</span>
+                        <span class="hidden sm:inline">سرور ابری</span>
+                    </button>
+                    <a href="../" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 transition" title="بازگشت به بورد کارهای طرح و برنامه">
+                        <span>📋</span>
+                        <span class="hidden sm:inline">بورد کانبان</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Days Tabs Bar -->
+        <div class="bg-slate-50 border-t border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between overflow-x-auto">
+                <div id="daysTabsContainer" class="flex items-center gap-1.5 py-1.5">
+                    <!-- Dynamic Tabs Rendered via JS -->
+                </div>
+                <div id="dayHoursConfigArea" class="flex items-center gap-2 py-1.5 flex-shrink-0 text-xs text-slate-500">
+                    <span id="dayHoursSpan" class="bg-slate-200/80 text-slate-700 px-2.5 py-1 rounded-md font-mono text-[11px]">ساعت: ۱۲:۰۰ الی ۲۴:۰۰</span>
+                    <button onclick="editDayHours()" class="text-sky-600 hover:underline font-medium">تنظیم ساعات</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex flex-col gap-4">
+
+        <!-- Info & Stats Bar (Only shown on single-day view) -->
+        <section id="statsBarSection" class="grid grid-cols-2 sm:grid-cols-4 gap-3 no-print">
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-lg">
+                    📋
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500">تعداد برنامه‌ها</div>
+                    <div id="statEventCount" class="text-lg font-bold text-slate-800">۰</div>
+                </div>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">
+                    ⏳
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500">مجموع زمان زمان‌بندی‌شده</div>
+                    <div id="statTotalHours" class="text-lg font-bold text-slate-800">۰ ساعت</div>
+                </div>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-lg">
+                    💰
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500">برآورد هزینه</div>
+                    <div id="statTotalCost" class="text-lg font-bold text-slate-800">۰ تومان</div>
+                </div>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-lg">
+                    💡
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500">ایده‌ها و گزینه‌ها</div>
+                    <div id="statTotalIdeas" class="text-lg font-bold text-slate-800">۰ ایده ثبت‌شده</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instructions Banner -->
+        <div id="instructionsBanner" class="bg-sky-50/80 border border-sky-200 rounded-xl px-4 py-2 text-xs text-sky-950 flex items-center justify-between gap-2 no-print">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sky-700 font-bold flex items-center gap-1"><span>💡</span> راهنما:</span>
+                <span>برای <b>تغییر طول</b> برنامه لبه‌های راست یا چپ باکس را بکشید. برای <b>جابجایی</b> کل باکس را بگیرید. با <b>کلیک روی هر باکس</b> جزئیات کامل باز می‌شود. بخش ایده‌ها در جدول زیر برای طوفان فکری اولیه است.</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <span id="saveStatusIndicator" class="text-emerald-700 flex items-center gap-1.5 text-[11px] font-medium bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs cursor-pointer hover:bg-slate-50 transition" onclick="openCloudSettingsModal()" title="وضعیت همگام‌سازی ابری - برای تنظیمات کلیک کنید">
+                    <span id="saveStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span id="saveStatusText">ذخیره خودکار فعال</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Single Day View Container -->
+        <div id="singleDayViewWrapper" class="flex flex-col gap-4">
+            <!-- Interactive Timeline Gantt Container -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
+                <!-- Header of Timeline View -->
+                <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <h2 id="currentDayTitle" class="font-bold text-slate-800 text-sm sm:text-base">دوشنبه ۲۵ آبان - روز اول</h2>
+                        <span class="text-xs text-slate-500" id="currentDaySubtitle">(آغاز اردو از ساعت ۱۲:۰۰ ظهر)</span>
+                    </div>
+                    <!-- Dynamic Category Badges (Legend) -->
+                    <div id="categoriesLegendContainer" class="flex items-center flex-wrap gap-2 text-xs">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Scrollable Timeline Canvas -->
+                <div class="relative overflow-x-auto p-4 timeline-scroll-container flex-1 min-h-[340px]" id="timelineScrollArea">
+                    <div id="timelineViewport" class="relative select-none" style="min-width: 1200px;">
+                        <!-- Ruler / Time Header -->
+                        <div id="timeRuler" class="relative h-11 border-b border-slate-300 select-none">
+                            <!-- Ticks generated dynamically -->
+                        </div>
+
+                        <!-- Timeline Track Area where boxes live -->
+                        <div id="timelineTracks" class="relative min-h-[260px] pt-4 pb-12">
+                            <!-- Event Boxes and Grid injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed List of Activities & Ideas (Table View) -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <span>جدول جامع برنامه‌ها و بانک ایده‌ها</span>
+                        <span class="text-xs text-slate-400 font-normal">(شامل گزینه‌های پیشنهادی برای تصمیم‌گیری)</span>
+                    </h3>
+                    <button onclick="openNewEventModal()" class="text-xs text-sky-600 hover:underline font-semibold no-print">
+                        + افزودن برنامه جدید
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="py-2.5 px-3 rounded-r-lg w-28">زمان</th>
+                                <th class="py-2.5 px-3">عنوان و مشخصات برنامه</th>
+                                <th class="py-2.5 px-3 w-32">دسته‌بندی</th>
+                                <th class="py-2.5 px-3 w-28">مسئول</th>
+                                <th class="py-2.5 px-3 w-28">مکان</th>
+                                <th class="py-2.5 px-3 w-28">مخاطب</th>
+                                <th class="py-2.5 px-3 w-28">برآورد هزینه</th>
+                                <th class="py-2.5 px-3 w-44">چک‌لیست تجهیزات</th>
+                                <th class="py-2.5 px-3 text-center rounded-l-lg w-20 no-print">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody" class="divide-y divide-slate-100 text-slate-600">
+                            <!-- Dynamic Rows Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- All Days Overview View (Full Week Side-by-Side / Stacked) -->
+        <div id="allDaysOverviewWrapper" class="hidden flex flex-col gap-6">
+            <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 flex items-center justify-between no-print">
+                <div>
+                    <h2 class="text-base font-bold text-sky-900">نمای کامل کل اردو (از دوشنبه ظهر تا جمعه ظهر)</h2>
+                    <p class="text-xs text-sky-700 mt-0.5">در این نما تمامی ۵ روز اردو به همراه تمام برنامه‌ها و ایده‌ها به صورت یکجا نمایش داده می‌شود.</p>
+                </div>
+                <button onclick="triggerPrint()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
+                    چاپ کل اردو (PDF)
+                </button>
+            </div>
+
+            <div id="allDaysContainer" class="space-y-6">
+                <!-- Stacked Days Timeline & Summary injected dynamically -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Edit / Add Advanced Event -->
+    <div id="eventModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-2xl max-h-[92vh] overflow-y-auto transform transition-all flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                <h3 id="modalTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <span id="modalHeaderIcon">✏️</span>
+                    <span>ویرایش برنامه</span>
+                </h3>
+                <button onclick="closeEventModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body Form -->
+            <form id="eventForm" onsubmit="saveEventForm(event)" class="p-6 space-y-4 flex-1">
+                <input type="hidden" id="editEventId">
+
+                <!-- Title & Category Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">عنوان برنامه <span class="text-rose-500">*</span></label>
+                        <input type="text" id="eventTitleInput" required placeholder="مثال: حرکت اتوبوس‌ها و پذیرایی" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs font-bold text-slate-700">دسته‌بندی</label>
+                            <button type="button" onclick="openCategoryManagerModal()" class="text-[11px] text-sky-600 hover:underline">ویرایش رنگ‌ها</button>
+                        </div>
+                        <select id="eventCategorySelect" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Time Controls -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">ساعت شروع</label>
+                        <input type="time" id="eventStartTimeInput" required class="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-sky-500 outline-none text-center font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">ساعت پایان</label>
+                        <input type="time" id="eventEndTimeInput" required class="w-full px-2.5 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-sky-500 outline-none text-center font-mono">
+                    </div>
+                    <div class="col-span-2 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-xs text-slate-600 p-2">
+                        <span>مدت زمان: </span>
+                        <span id="calculatedDurationBadge" class="mr-1.5 font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded">۱ ساعت و ۳۰ دقیقه</span>
+                    </div>
+                </div>
+
+                <!-- In-Charge & Location & Target Audience -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">مسئول اجرا</label>
+                        <input type="text" id="eventInChargeInput" placeholder="مثال: آقای رضایی" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">مکان / سالن</label>
+                        <input type="text" id="eventLocationInput" placeholder="مثال: سالن آمفی‌تئاتر" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">مخاطب برنامه</label>
+                        <input type="text" id="eventAudienceInput" placeholder="مثال: همه دانش‌آموزان" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                    </div>
+                </div>
+
+                <!-- Estimated Cost -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">برآورد هزینه (تومان)</label>
+                    <input type="number" id="eventCostInput" placeholder="0" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+
+                <!-- IDEAS / PROPOSALS SECTION (New Request!) -->
+                <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                            <span>💡 بانک ایده‌ها و گزینه‌های پیشنهادی برای این برنامه</span>
+                            <span class="text-[10px] text-amber-700 font-normal">(وقتی هنوز جزئیات نهایی نشده است)</span>
+                        </label>
+                        <button type="button" onclick="addIdeaDraftItem()" class="text-xs text-amber-700 hover:text-amber-900 font-bold">
+                            + افزودن ایده / گزینه
+                        </button>
+                    </div>
+                    <div id="ideasDraftList" class="space-y-1.5 max-h-36 overflow-y-auto">
+                        <!-- Dynamic idea items -->
+                    </div>
+                </div>
+
+                <!-- Equipment Checklist Section -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <span>🎒 چک‌لیست لوازم و تجهیزات</span>
+                            <span class="text-[10px] text-slate-400 font-normal">(تیک زدن هنگام هماهنگی)</span>
+                        </label>
+                        <button type="button" onclick="addChecklistItemInput()" class="text-xs text-sky-600 hover:text-sky-700 font-bold">
+                            + افزودن وسیله
+                        </button>
+                    </div>
+                    <div id="checklistItemsList" class="space-y-1.5 max-h-36 overflow-y-auto">
+                        <!-- Dynamic checklist items -->
+                    </div>
+                </div>
+
+                <!-- Notes / Description -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">توضیحات و سناریوی دقیق برنامه</label>
+                    <textarea id="eventNotesInput" rows="2" placeholder="توضیحات اجرایی، نکات ایمنی و تربیتی..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+                    <button type="button" id="deleteEventBtn" onclick="deleteCurrentEvent()" class="text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <span>حذف این برنامه</span>
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="closeEventModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-50 transition">
+                            انصراف
+                        </button>
+                        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold shadow-md shadow-sky-600/20 transition">
+                            ذخیره تغییرات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Category & Color Manager (New Request!) -->
+    <div id="categoryManagerModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-lg p-5 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <span>🎨</span>
+                    <span>مدیریت دسته‌بندی‌ها و انتخاب رنگ</span>
+                </h3>
+                <button onclick="closeCategoryManagerModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-500">می‌توانید نام دسته‌بندی‌ها را ویرایش کنید، رنگ دلخواه به آنها اختصاص دهید یا دسته‌بندی جدید اضافه کنید.</p>
+
+            <div id="categoriesListManager" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Add New Category Row -->
+            <div class="pt-3 border-t flex items-center gap-2">
+                <input type="text" id="newCategoryNameInput" placeholder="نام دسته‌بندی جدید (مثال: ورزشی)..." class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs outline-none">
+                <input type="color" id="newCategoryColorInput" value="#0284c7" class="w-8 h-8 rounded-lg cursor-pointer border-0 p-0" title="انتخاب رنگ">
+                <button onclick="addNewCategoryFromManager()" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition">
+                    + افزودن
+                </button>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="closeCategoryManagerModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition">
+                    بستن و اعمال
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Day Hours Config -->
+    <div id="dayHoursModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm p-5 space-y-4">
+            <h3 class="font-bold text-slate-800 text-sm">تنظیم ساعات خط زمانی این روز</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-slate-600 mb-1">ساعت شروع خط زمانی:</label>
+                    <input type="number" id="dayStartHourInput" min="0" max="23" class="w-full px-3 py-1.5 border rounded-lg text-sm text-center font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-600 mb-1">ساعت پایان خط زمانی:</label>
+                    <input type="number" id="dayEndHourInput" min="1" max="24" class="w-full px-3 py-1.5 border rounded-lg text-sm text-center font-mono">
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t">
+                <button onclick="closeDayHoursModal()" class="px-3 py-1.5 border rounded-lg text-xs">انصراف</button>
+                <button onclick="saveDayHours()" class="px-4 py-1.5 bg-sky-600 text-white rounded-lg text-xs font-bold">ذخیره</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Context Menu for Timeline Events -->
+    <div id="timelineContextMenu" class="fixed z-50 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 w-52 text-xs hidden select-none transition-all font-sans">
+        <div id="contextMenuTitle" class="px-3 py-1.5 font-bold text-slate-800 border-b border-slate-100 truncate text-[11px] bg-slate-50">
+            عنوان برنامه
+        </div>
+        <button onclick="handleContextAction('edit')" class="w-full text-right px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition">
+            <span>✏️</span>
+            <span>ویرایش کامل برنامه</span>
+        </button>
+        <button onclick="handleContextAction('ideas')" class="w-full text-right px-3 py-2 hover:bg-amber-50 flex items-center gap-2 text-amber-800 transition">
+            <span>💡</span>
+            <span>ایده‌ها و گزینه‌های پیشنهادی</span>
+        </button>
+        <button onclick="handleContextAction('checklist')" class="w-full text-right px-3 py-2 hover:bg-sky-50 flex items-center gap-2 text-sky-800 transition">
+            <span>🎒</span>
+            <span>چک‌لیست وسایل و تسک‌ها</span>
+        </button>
+        <button onclick="handleContextAction('duplicate')" class="w-full text-right px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 transition">
+            <span>📋</span>
+            <span>کپی کردن برنامه</span>
+        </button>
+        <div class="my-1 border-t border-slate-100"></div>
+        <button onclick="handleContextAction('delete')" class="w-full text-right px-3 py-2 hover:bg-rose-50 flex items-center gap-2 text-rose-600 font-bold transition">
+            <span>🗑️</span>
+            <span>حذف این برنامه</span>
+        </button>
+    </div>
+
+    <!-- Quick View Modal: Ideas & Tasks -->
+    <div id="quickViewModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col transform transition-all">
+            <!-- Header -->
+            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <span id="quickModalIcon" class="text-xl">💡</span>
+                    <div>
+                        <h3 id="quickModalTitle" class="text-sm font-bold text-slate-800">ایده‌های برنامه</h3>
+                        <p id="quickModalSubtitle" class="text-[11px] text-slate-500 font-medium truncate max-w-[260px]">عنوان برنامه</p>
+                    </div>
+                </div>
+                <button onclick="closeQuickViewModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Body Content -->
+            <div id="quickModalBody" class="p-4 flex-1 overflow-y-auto space-y-2">
+                <!-- Dynamic Items Injected -->
+            </div>
+
+            <!-- Footer Add Input -->
+            <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+                <input type="text" id="quickModalInput" placeholder="مورد جدید..." class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-sky-500 bg-white" onkeydown="if(event.key === 'Enter') handleQuickModalAdd()">
+                <button onclick="handleQuickModalAdd()" class="px-3.5 py-1.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white rounded-lg text-xs font-bold transition shadow-xs">
+                    + افزودن
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cloudflare Worker Settings Modal -->
+    <div id="cloudSettingsModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-xl">☁️</span>
+                    <h3 class="font-bold text-slate-900 text-sm">تنظیمات اتصال به سرور ابری (Cloudflare Worker)</h3>
+                </div>
+                <button onclick="closeCloudSettingsModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 overflow-y-auto text-xs text-slate-700">
+                <p class="leading-relaxed text-slate-600">
+                    داده‌های تایم‌لاین به‌طور خودکار در سرور ابری کلادفلر و دیتابیس فایربیس ذخیره شده و روی تمامی دستگاه‌ها همگام‌سازی می‌شود. همچنین همیشه یک نسخه آفلاین در حافظه مرورگر شما نگهداری می‌شود.
+                </p>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">آدرس سرویس Cloudflare Worker تایم‌لاین:</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="timelineWorkerUrlInput" dir="ltr" class="flex-1 px-3 py-2 border border-slate-300 rounded-xl font-mono text-xs focus:ring-2 focus:ring-sky-500 outline-none bg-white">
+                        <button onclick="saveCustomWorkerUrl()" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl whitespace-nowrap transition shadow-xs">
+                            ذخیره و تست
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700">وضعیت اتصال:</span>
+                        <div class="flex items-center gap-2">
+                            <span id="cloudModalLed" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                            <span id="cloudModalStatusText" class="font-medium text-slate-600">در حال بررسی...</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-200/80">
+                        <button onclick="fetchCloudData(true)" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-slate-700 font-medium transition">
+                            🔄 دریافت آخرین نسخه از سرور
+                        </button>
+                        <button onclick="pushAllTimelineToCloud()" class="px-3 py-1.5 bg-sky-50 border border-sky-200 hover:bg-sky-100 text-sky-800 font-bold rounded-lg transition">
+                            ⬆️ ارسال کل داده‌های محلی به سرور
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                    <span>پشتیبانی خودکار از حالت آفلاین و LocalStorage فعال است</span>
+                    <button onclick="resetWorkerUrlToDefault()" class="text-sky-600 hover:underline">بازنشانی آدرس پیش‌فرض</button>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeCloudSettingsModal()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition">
+                    بستن
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const STORAGE_KEY = 'RAHEROSHAN_CAMP_TIMELINE_V2';
+
+        // Default Categories Palette
+        const DEFAULT_CATEGORIES = [
+            { id: 'meal', name: 'غذا / پذیرایی', color: '#f59e0b', textColor: '#ffffff' },
+            { id: 'study', name: 'آموزشی / کارگاه', color: '#0284c7', textColor: '#ffffff' },
+            { id: 'game', name: 'بازی / مسابقه', color: '#10b981', textColor: '#ffffff' },
+            { id: 'cultural', name: 'فرهنگی / عمومی', color: '#8b5cf6', textColor: '#ffffff' },
+            { id: 'rest', name: 'استراحت / اسکان', color: '#ef4444', textColor: '#ffffff' },
+            { id: 'transit', name: 'تردد / جابجایی', color: '#64748b', textColor: '#ffffff' },
+            { id: 'custom', name: 'سایر برنامه‌ها', color: '#ec4899', textColor: '#ffffff' },
+        ];
+
+        // Default Initial State for Camp (Monday 25 Aban noon to Friday 29 Aban noon)
+        const DEFAULT_DATA = {
+            activeDayIndex: 0, // 0 to 4: specific day, 999: all days overview
+            zoom: 1.0,
+            categories: DEFAULT_CATEGORIES,
+            days: [
+                {
+                    id: 'day-1',
+                    name: 'دوشنبه ۲۵ آبان',
+                    subtitle: 'آغاز اردو (ظهر)',
+                    startHour: 12,
+                    endHour: 24,
+                    events: [
+                        {
+                            id: 'ev-1',
+                            title: 'حرکت از مبدا و استقرار در اردوگاه',
+                            category: 'transit',
+                            startTime: '12:00',
+                            endTime: '14:30',
+                            track: 0,
+                            inCharge: 'آقای رضایی (ترابری)',
+                            location: 'ایستگاه راه‌آهن / اردوگاه',
+                            audience: 'همه دانش‌پژوهان',
+                            cost: 2500000,
+                            checklist: [
+                                { text: 'هماهنگی اتوبوس‌ها و لیست اسامی', done: true },
+                                { text: 'تحویل اتاق‌ها و کلیدها', done: true }
+                            ],
+                            ideas: [
+                                { id: 'i1', text: 'پخش پادکست معرفی مسیر در اتوبوس' },
+                                { id: 'i2', text: 'مسابقه حدس کلمات در مسیر حرکت' }
+                            ],
+                            notes: 'توزیع کارت اردو و تحویل اتاق‌ها بر اساس گروه‌بندی‌های قبلی.'
+                        },
+                        {
+                            id: 'ev-2',
+                            title: 'ناهار، نماز و استراحت اولیه',
+                            category: 'meal',
+                            startTime: '14:30',
+                            endTime: '16:00',
+                            track: 0,
+                            inCharge: 'تیم تدارکات (آقای علوی)',
+                            location: 'سلف سرویس مرکزی',
+                            audience: 'همه',
+                            cost: 1800000,
+                            checklist: [{ text: 'بررسی گرم بودن غذا', done: true }],
+                            ideas: [
+                                { id: 'i3', text: 'سرو دسر محلی منطقه' }
+                            ],
+                            notes: 'منوی ناهار: چلو جوجه کباب.'
+                        },
+                        {
+                            id: 'ev-3',
+                            title: 'مراسم افتتاحیه و معارفه قوانین اردو',
+                            category: 'cultural',
+                            startTime: '16:30',
+                            endTime: '18:30',
+                            track: 0,
+                            inCharge: 'مدیر اردو (استاد حسینی)',
+                            location: 'سالن همایش اصلی',
+                            audience: 'همه شرکت‌کنندگان',
+                            cost: 500000,
+                            checklist: [{ text: 'تست ویدئو پروژکتور و میکروفن', done: true }],
+                            ideas: [
+                                { id: 'i4', text: 'سوگندنامه تیمی مشترک در پایان افتتاحیه' },
+                                { id: 'i5', text: 'اهدای گردن‌آویزهای رنگی به سرگروه‌ها' }
+                            ],
+                            notes: 'معرفی مربیان، اهداف اردو، قوانین انضباطی و قرعه‌کشی تیم‌ها.'
+                        },
+                        {
+                            id: 'ev-4',
+                            title: 'بازی یخ‌شکن و کار تیمی مقدماتی',
+                            category: 'game',
+                            startTime: '19:00',
+                            endTime: '20:30',
+                            track: 0,
+                            inCharge: 'مربیان تربیتی',
+                            location: 'محوطه چمن / سالن ورزشی',
+                            audience: 'تیم‌های دانش‌آموزی',
+                            cost: 300000,
+                            checklist: [{ text: 'طناب، توپ و نشانه‌های رنگی', done: true }],
+                            ideas: [
+                                { id: 'i6', text: 'ایده چالش ساخت بلندترین سازه با ماکارونی' },
+                                { id: 'i7', text: 'بازی فرار از جزیره فرضی' }
+                            ],
+                            notes: 'فعالیت‌های مفرح برای شناخت اعضای گروه‌ها از یکدیگر.'
+                        },
+                        {
+                            id: 'ev-5',
+                            title: 'شام و جلسه سرگروه‌ها',
+                            category: 'meal',
+                            startTime: '21:00',
+                            endTime: '22:30',
+                            track: 0,
+                            inCharge: 'مسئول شب',
+                            location: 'غذاخوری',
+                            audience: 'همه + مربیان',
+                            cost: 1200000,
+                            checklist: [],
+                            ideas: [],
+                            notes: 'ارزیابی روز اول و هماهنگی برنامه‌های سه‌شنبه.'
+                        },
+                        {
+                            id: 'ev-6',
+                            title: 'خاموشی و استراحت شبانه',
+                            category: 'rest',
+                            startTime: '23:00',
+                            endTime: '24:00',
+                            track: 0,
+                            inCharge: 'نگهبانی و مربیان کشیک',
+                            location: 'خوابگاه‌ها',
+                            audience: 'همه',
+                            cost: 0,
+                            checklist: [{ text: 'چک کردن قفل‌ها و خاموشی چراغ‌ها', done: false }],
+                            ideas: [],
+                            notes: 'سکوت کامل در محوطه خوابگاه.'
+                        }
+                    ]
+                },
+                {
+                    id: 'day-2',
+                    name: 'سه‌شنبه ۲۶ آبان',
+                    subtitle: 'روز دوم (آموزش و رقابت)',
+                    startHour: 6,
+                    endHour: 24,
+                    events: [
+                        {
+                            id: 'ev-201',
+                            title: 'بیدارباش، ورزش صبحگاهی و نماز',
+                            category: 'rest',
+                            startTime: '06:00',
+                            endTime: '07:30',
+                            track: 0,
+                            inCharge: 'مربی ورزش',
+                            location: 'زمین صبحگاه',
+                            audience: 'همه',
+                            cost: 0,
+                            checklist: [],
+                            ideas: [{ id: 'i8', text: 'ورزش با ریتم ضرب باستانی' }],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-202',
+                            title: 'صبحانه سلف سرویس',
+                            category: 'meal',
+                            startTime: '07:30',
+                            endTime: '08:45',
+                            track: 0,
+                            inCharge: 'تدارکات',
+                            location: 'سلف',
+                            audience: 'همه',
+                            cost: 950000,
+                            checklist: [{ text: 'نان تازه، تخم‌مرغ و پنیر', done: true }],
+                            ideas: [],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-203',
+                            title: 'کارگاه اول: حل مسئله و هوش مصنوعی',
+                            category: 'study',
+                            startTime: '09:00',
+                            endTime: '12:30',
+                            track: 0,
+                            inCharge: 'دکتر کاظمی',
+                            location: 'سایت رایانه',
+                            audience: 'گروه الف و ب',
+                            cost: 1500000,
+                            checklist: [{ text: 'بررسی اینترنت و اکانت‌ها', done: true }],
+                            ideas: [
+                                { id: 'i9', text: 'مسابقه سرعت در دیباگ کردن کد بین دو گروه' }
+                            ],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-204',
+                            title: 'ناهار، نماز و وقت آزاد',
+                            category: 'meal',
+                            startTime: '13:00',
+                            endTime: '15:00',
+                            track: 0,
+                            inCharge: 'آقای علوی',
+                            location: 'سلف',
+                            audience: 'همه',
+                            cost: 2000000,
+                            checklist: [],
+                            ideas: [],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-205',
+                            title: 'مسابقه رباتیک و چالش تیمی',
+                            category: 'game',
+                            startTime: '15:30',
+                            endTime: '18:30',
+                            track: 0,
+                            inCharge: 'تیم داوری',
+                            location: 'سالن چندمنظوره',
+                            audience: 'همه تیم‌ها',
+                            cost: 800000,
+                            checklist: [{ text: 'کرنومتر و جدول امتیازات', done: true }],
+                            ideas: [
+                                { id: 'i10', text: 'پخش زنده تصویر پیست روی مانیتور سالن' }
+                            ],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-206',
+                            title: 'حلقه صمیمی و شب‌نشینی دور آتش',
+                            category: 'cultural',
+                            startTime: '20:30',
+                            endTime: '22:30',
+                            track: 0,
+                            inCharge: 'مربیان فرهنگی',
+                            location: 'محوطه باز کمپ',
+                            audience: 'همه',
+                            cost: 400000,
+                            checklist: [{ text: 'هیزم و چای آتشی', done: false }],
+                            ideas: [{ id: 'i11', text: 'مسابقه استندآپ کمدی کوتاه توسط بچه‌ها' }],
+                            notes: ''
+                        }
+                    ]
+                },
+                {
+                    id: 'day-3',
+                    name: 'چهارشنبه ۲۷ آبان',
+                    subtitle: 'روز سوم (کار تیمی و اردوی صحرایی)',
+                    startHour: 6,
+                    endHour: 24,
+                    events: [
+                        {
+                            id: 'ev-301',
+                            title: 'صبحانه انرژی‌بخش',
+                            category: 'meal',
+                            startTime: '07:30',
+                            endTime: '08:30',
+                            track: 0,
+                            inCharge: 'تدارکات',
+                            location: 'سلف',
+                            audience: 'همه',
+                            cost: 800000,
+                            checklist: [],
+                            ideas: [],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-302',
+                            title: 'پیمایش کوهپایه و کارگاه جهت‌یابی',
+                            category: 'game',
+                            startTime: '09:00',
+                            endTime: '13:00',
+                            track: 0,
+                            inCharge: 'راهنمای کوهنوردی',
+                            location: 'طبیعت اطراف کمپ',
+                            audience: 'دانش‌پژوهان',
+                            cost: 1200000,
+                            checklist: [{ text: 'کیف کمک‌های اولیه و آب آشامیدنی', done: true }],
+                            ideas: [{ id: 'i12', text: 'بازی رالی عکاسی از گونه‌های گیاهی' }],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-303',
+                            title: 'ناهار صحرایی و استراحت',
+                            category: 'meal',
+                            startTime: '13:30',
+                            endTime: '15:30',
+                            track: 0,
+                            inCharge: 'تدارکات',
+                            location: 'کمپ صحرایی',
+                            audience: 'همه',
+                            cost: 1500000,
+                            checklist: [],
+                            ideas: [],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-304',
+                            title: 'ماراتن برنامه‌نویسی و حل مسئله (Hackathon)',
+                            category: 'study',
+                            startTime: '16:30',
+                            endTime: '21:00',
+                            track: 0,
+                            inCharge: 'کمیته علمی',
+                            location: 'لابی فناوری',
+                            audience: 'تیم‌ها',
+                            cost: 700000,
+                            checklist: [],
+                            ideas: [{ id: 'i13', text: 'اعطای امتیاز طلایی برای خلاقانه‌ترین ایده' }],
+                            notes: ''
+                        }
+                    ]
+                },
+                {
+                    id: 'day-4',
+                    name: 'پنجشنبه ۲۸ آبان',
+                    subtitle: 'روز چهارم (فینال مسابقات و جشن)',
+                    startHour: 6,
+                    endHour: 24,
+                    events: [
+                        {
+                            id: 'ev-401',
+                            title: 'صبحانه و آمادگی ارائه‌ها',
+                            category: 'meal',
+                            startTime: '07:30',
+                            endTime: '09:00',
+                            track: 0,
+                            inCharge: 'تدارکات',
+                            location: 'سلف',
+                            audience: 'همه',
+                            cost: 850000,
+                            checklist: [],
+                            ideas: [],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-402',
+                            title: 'ارائه پروژه‌ها و داوری نهایی',
+                            category: 'study',
+                            startTime: '09:30',
+                            endTime: '13:00',
+                            track: 0,
+                            inCharge: 'هیات داوران',
+                            location: 'سالن همایش',
+                            audience: 'همه گروه‌ها',
+                            cost: 400000,
+                            checklist: [{ text: 'فرم‌های نمره‌دهی داوران', done: true }],
+                            ideas: [{ id: 'i14', text: 'رأی‌گیری مردمی (تیم محبوب شرکت‌کنندگان)' }],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-403',
+                            title: 'جشن بزرگ اختتامیه و اهدای جوایز',
+                            category: 'cultural',
+                            startTime: '18:00',
+                            endTime: '21:30',
+                            track: 0,
+                            inCharge: 'مدیر اردو و مجری',
+                            location: 'سالن اصلی',
+                            audience: 'همه شرکت‌کنندگان و مهمانان',
+                            cost: 4500000,
+                            checklist: [{ text: 'تندیس‌ها و جوایز نقدی', done: true }],
+                            ideas: [{ id: 'i15', text: 'پخش کلیپ غافلگیرکننده عکس‌های مخفی اردو' }],
+                            notes: ''
+                        }
+                    ]
+                },
+                {
+                    id: 'day-5',
+                    name: 'جمعه ۲۹ آبان',
+                    subtitle: 'روز پایانی (جمع‌بندی و بازگشت)',
+                    startHour: 7,
+                    endHour: 15,
+                    events: [
+                        {
+                            id: 'ev-501',
+                            title: 'صبحانه و تحویل اتاق‌ها',
+                            category: 'meal',
+                            startTime: '08:00',
+                            endTime: '09:30',
+                            track: 0,
+                            inCharge: 'مسئول خوابگاه',
+                            location: 'خوابگاه‌ها',
+                            audience: 'همه',
+                            cost: 600000,
+                            checklist: [{ text: 'جمع‌آوری کلیدها و کارت‌ها', done: false }],
+                            ideas: [],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-502',
+                            title: 'عکس دسته‌جمعی و اهدای گواهینامه‌ها',
+                            category: 'cultural',
+                            startTime: '10:00',
+                            endTime: '11:30',
+                            track: 0,
+                            inCharge: 'روابط عمومی',
+                            location: 'محوطه ورودی',
+                            audience: 'همه',
+                            cost: 300000,
+                            checklist: [{ text: 'بنر رسمی اردو', done: true }],
+                            ideas: [{ id: 'i16', text: 'دفترچه یادگاری و امضای دسته‌جمعی' }],
+                            notes: ''
+                        },
+                        {
+                            id: 'ev-503',
+                            title: 'ناهار خداحافظی و حرکت به سمت مبدا',
+                            category: 'transit',
+                            startTime: '12:00',
+                            endTime: '14:00',
+                            track: 0,
+                            inCharge: 'ترابری',
+                            location: 'ترمینال حرکت',
+                            audience: 'همه',
+                            cost: 2800000,
+                            checklist: [],
+                            ideas: [],
+                            notes: 'پایان رسمی اردو.'
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // App State
+        let appData = loadState();
+
+        function loadState() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed && parsed.days && parsed.days.length > 0) {
+                        // Ensure categories exist
+                        if (!parsed.categories || parsed.categories.length === 0) {
+                            parsed.categories = DEFAULT_CATEGORIES;
+                        }
+                        // Ensure ideas array on all events
+                        parsed.days.forEach(d => {
+                            d.events.forEach(ev => {
+                                if (!ev.ideas) ev.ideas = [];
+                            });
+                        });
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.warn('LocalStorage load failed, using default:', e);
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_DATA));
+        }
+
+        // Cloudflare Worker & Firebase Cloud Sync Configuration
+        const DEFAULT_TIMELINE_WORKER_URL = 'https://kanba-worker.zeinab-ghodspour.workers.dev/timeline_data';
+        let timelineWorkerUrl = localStorage.getItem('timeline_worker_url') || DEFAULT_TIMELINE_WORKER_URL;
+
+        let cloudSaveTimer = null;
+        let isSavingToCloud = false;
+        let queuedCloudSave = false;
+        let preferredSaveMethod = 'PUT';
+
+        function updateSaveStatus(state, text) {
+            const ind = document.getElementById('saveStatusIndicator');
+            const dot = document.getElementById('saveStatusDot');
+            const txt = document.getElementById('saveStatusText');
+            const modalLed = document.getElementById('cloudModalLed');
+            const modalTxt = document.getElementById('cloudModalStatusText');
+
+            if (txt && text) txt.textContent = text;
+            if (modalTxt && text) modalTxt.textContent = text;
+
+            let dotClass = 'w-2 h-2 rounded-full ';
+            let textClass = 'text-[11px] font-medium ';
+
+            if (state === 'online') {
+                dotClass += 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]';
+                textClass += 'text-emerald-700';
+            } else if (state === 'syncing') {
+                dotClass += 'bg-blue-500 animate-spin';
+                textClass += 'text-blue-700';
+            } else if (state === 'error') {
+                dotClass += 'bg-rose-500';
+                textClass += 'text-rose-700';
+            } else {
+                dotClass += 'bg-amber-500';
+                textClass += 'text-amber-700';
+            }
+
+            if (dot) dot.className = dotClass;
+            if (modalLed) modalLed.className = dotClass;
+            if (ind) ind.className = `flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs cursor-pointer hover:bg-slate-50 transition ${textClass}`;
+        }
+
+        function triggerCloudSave(immediate = false) {
+            if (cloudSaveTimer) {
+                clearTimeout(cloudSaveTimer);
+                cloudSaveTimer = null;
+            }
+            if (immediate) {
+                flushCloudSave();
+            } else {
+                cloudSaveTimer = setTimeout(() => {
+                    cloudSaveTimer = null;
+                    flushCloudSave();
+                }, 400);
+            }
+        }
+
+        async function flushCloudSave() {
+            if (isSavingToCloud) {
+                queuedCloudSave = true;
+                return;
+            }
+
+            isSavingToCloud = true;
+            updateSaveStatus('syncing', 'در حال ذخیره ابری...');
+
+            try {
+                let res;
+                if (preferredSaveMethod === 'PUT') {
+                    try {
+                        res = await fetch(timelineWorkerUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(appData)
+                        });
+                        if (!res.ok) throw new Error(`Status ${res.status}`);
+                    } catch (putErr) {
+                        console.warn('PUT failed, trying PATCH fallback...', putErr);
+                        res = await fetch(timelineWorkerUrl, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(appData)
+                        });
+                        if (res.ok) preferredSaveMethod = 'PATCH';
+                    }
+                } else {
+                    try {
+                        res = await fetch(timelineWorkerUrl, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(appData)
+                        });
+                        if (!res.ok) throw new Error(`Status ${res.status}`);
+                    } catch (patchErr) {
+                        console.warn('PATCH failed, trying PUT fallback...', patchErr);
+                        res = await fetch(timelineWorkerUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(appData)
+                        });
+                        if (res.ok) preferredSaveMethod = 'PUT';
+                    }
+                }
+
+                if (res && res.ok) {
+                    updateSaveStatus('online', `همگام با سرور ابری (${new Date().toLocaleTimeString('fa-IR')})`);
+                } else {
+                    throw new Error('پاسخ ناموفق سرور');
+                }
+            } catch (err) {
+                console.warn('Cloud save error:', err);
+                updateSaveStatus('error', 'خطا در ذخیره ابری / ذخیره در حافظه محلی');
+            } finally {
+                isSavingToCloud = false;
+                if (queuedCloudSave) {
+                    queuedCloudSave = false;
+                    triggerCloudSave(true);
+                }
+            }
+        }
+
+        async function fetchCloudData(showFeedback = false) {
+            if (showFeedback) updateSaveStatus('syncing', 'در حال دریافت اطلاعات از سرور...');
+            try {
+                const res = await fetch(timelineWorkerUrl, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) throw new Error(`کد خطا: ${res.status}`);
+                const data = await res.json();
+                if (data && data.days && Array.isArray(data.days) && data.days.length > 0) {
+                    if (!data.categories || data.categories.length === 0) {
+                        data.categories = DEFAULT_CATEGORIES;
+                    }
+                    data.days.forEach(d => {
+                        d.events.forEach(ev => {
+                            if (!ev.ideas) ev.ideas = [];
+                        });
+                    });
+
+                    if (JSON.stringify(data) !== JSON.stringify(appData)) {
+                        appData = data;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                        renderAll();
+                    }
+                    updateSaveStatus('online', `متصل و همگام با سرور (${new Date().toLocaleTimeString('fa-IR')})`);
+                    if (showFeedback) alert('اطلاعات با موفقیت از سرور ابری دریافت و به‌روز شد.');
+                } else if (showFeedback) {
+                    alert('هنوز اطلاعاتی برای تایم‌لاین روی سرور ثبت نشده است. می‌توانید با دکمه «ارسال به سرور» اطلاعات فعلی را بارگذاری کنید.');
+                }
+            } catch (err) {
+                console.warn('Cloud fetch error:', err);
+                updateSaveStatus('error', 'عدم اتصال به سرور / استفاده از حافظه محلی');
+                if (showFeedback) alert('خطا در دریافت اطلاعات از سرور ابری: ' + err.message);
+            }
+        }
+
+        async function pushAllTimelineToCloud() {
+            if (!confirm('آیا از ارسال و بازنویسی تمام برنامه‌های این تایم‌لاین روی سرور ابری مطمئن هستید؟')) {
+                return;
+            }
+            updateSaveStatus('syncing', 'در حال ارسال به سرور...');
+            try {
+                const res = await fetch(timelineWorkerUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(appData)
+                });
+                if (!res.ok) throw new Error(`کد خطا: ${res.status}`);
+                updateSaveStatus('online', `اطلاعات با موفقیت در سرور ثبت شد (${new Date().toLocaleTimeString('fa-IR')})`);
+                alert('اطلاعات تایم‌لاین با موفقیت به سرور ابری ارسال شد.');
+            } catch (err) {
+                alert('خطا در ارسال به سرور: ' + err.message);
+                updateSaveStatus('error', 'خطا در ارسال اطلاعات');
+            }
+        }
+
+        function openCloudSettingsModal() {
+            const input = document.getElementById('timelineWorkerUrlInput');
+            if (input) input.value = timelineWorkerUrl;
+            document.getElementById('cloudSettingsModal').classList.remove('hidden');
+        }
+
+        function closeCloudSettingsModal() {
+            document.getElementById('cloudSettingsModal').classList.add('hidden');
+        }
+
+        function saveCustomWorkerUrl() {
+            const val = document.getElementById('timelineWorkerUrlInput').value.trim();
+            if (!val) return alert('لطفاً آدرس معتبر وارد کنید.');
+            timelineWorkerUrl = val;
+            localStorage.setItem('timeline_worker_url', timelineWorkerUrl);
+            fetchCloudData(true);
+            alert('آدرس سرور ذخیره شد.');
+        }
+
+        function resetWorkerUrlToDefault() {
+            timelineWorkerUrl = DEFAULT_TIMELINE_WORKER_URL;
+            document.getElementById('timelineWorkerUrlInput').value = DEFAULT_TIMELINE_WORKER_URL;
+            localStorage.removeItem('timeline_worker_url');
+            fetchCloudData(true);
+        }
+
+        function setupTimelineBackgroundSync() {
+            setInterval(() => {
+                if (document.hidden) return;
+                const eventModal = document.getElementById('eventModal');
+                if (eventModal && !eventModal.classList.contains('hidden')) return;
+                fetchCloudData(false);
+            }, 15000);
+
+            window.addEventListener('focus', () => {
+                if (!document.hidden) fetchCloudData(false);
+            });
+        }
+
+        function saveState(immediateCloud = false) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                updateSaveStatus('syncing', 'در حال ذخیره‌سازی...');
+                triggerCloudSave(immediateCloud);
+            } catch (e) {
+                console.error('Save failed:', e);
+            }
+        }
+
+        function getCurrentDay() {
+            if (appData.activeDayIndex === 999) {
+                return appData.days[0];
+            }
+            return appData.days[appData.activeDayIndex] || appData.days[0];
+        }
+
+        function getCategoryMeta(catId) {
+            const found = appData.categories.find(c => c.id === catId);
+            if (found) return found;
+            return { id: 'other', name: catId || 'نامشخص', color: '#64748b', textColor: '#ffffff' };
+        }
+
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':').map(Number);
+            return parts[0] * 60 + (parts[1] || 0);
+        }
+
+        function minutesToTime(minutes) {
+            minutes = Math.max(0, Math.min(24 * 60, Math.round(minutes)));
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function formatDuration(startStr, endStr) {
+            const diff = timeToMinutes(endStr) - timeToMinutes(startStr);
+            if (diff <= 0) return '۰ دقیقه';
+            const hours = Math.floor(diff / 60);
+            const mins = diff % 60;
+            let res = '';
+            if (hours > 0) res += `${hours} ساعت `;
+            if (mins > 0) res += `${mins} دقیقه`;
+            return res.trim();
+        }
+
+        function formatTomans(amount) {
+            if (!amount || isNaN(amount)) return '۰';
+            return Number(amount).toLocaleString('fa-IR');
+        }
+
+        // Zoom Control with Clean Discrete Steps
+        const ZOOM_LEVELS = [0.6, 0.75, 0.85, 1.0, 1.15, 1.3, 1.5, 1.75, 2.0];
+        function changeZoom(dir) {
+            let currentIdx = ZOOM_LEVELS.findIndex(z => Math.abs(z - appData.zoom) < 0.05);
+            if (currentIdx === -1) currentIdx = 3; // default 1.0
+            let nextIdx = currentIdx + dir;
+            if (nextIdx < 0) nextIdx = 0;
+            if (nextIdx >= ZOOM_LEVELS.length) nextIdx = ZOOM_LEVELS.length - 1;
+            appData.zoom = ZOOM_LEVELS[nextIdx];
+            document.getElementById('zoomLevelText').textContent = Math.round(appData.zoom * 100) + '%';
+            renderTimeline();
+            saveState();
+        }
+
+        // Render Tabs
+        function renderDaysTabs() {
+            const container = document.getElementById('daysTabsContainer');
+            container.innerHTML = '';
+
+            // Individual Day Tabs
+            appData.days.forEach((day, index) => {
+                const isActive = appData.activeDayIndex === index;
+                const btn = document.createElement('button');
+                btn.className = `px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+                    isActive 
+                        ? 'bg-sky-600 text-white shadow-sm' 
+                        : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                }`;
+                btn.innerHTML = `
+                    <span>${day.name}</span>
+                    <span class="text-[10px] opacity-80 font-normal">(${day.events.length})</span>
+                `;
+                btn.onclick = () => {
+                    appData.activeDayIndex = index;
+                    renderAll();
+                    saveState();
+                };
+                container.appendChild(btn);
+            });
+
+            // ALL DAYS TAB (Full overview)
+            const isAllDaysActive = appData.activeDayIndex === 999;
+            const allDaysBtn = document.createElement('button');
+            allDaysBtn.className = `px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+                isAllDaysActive 
+                    ? 'bg-indigo-700 text-white shadow-sm' 
+                    : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200'
+            }`;
+            allDaysBtn.innerHTML = `
+                <span>🌐</span>
+                <span>نمای کلی (همه روزها)</span>
+            `;
+            allDaysBtn.onclick = () => {
+                appData.activeDayIndex = 999;
+                renderAll();
+                saveState();
+            };
+            container.appendChild(allDaysBtn);
+
+            // Update sub-header titles
+            if (!isAllDaysActive) {
+                const curDay = getCurrentDay();
+                document.getElementById('currentDayTitle').textContent = curDay.name;
+                document.getElementById('currentDaySubtitle').textContent = curDay.subtitle || '';
+                document.getElementById('dayHoursSpan').textContent = `بازه زمانی: ساعت ${curDay.startHour}:۰۰ الی ${curDay.endHour}:۰۰`;
+                document.getElementById('dayHoursConfigArea').classList.remove('hidden');
+                document.getElementById('zoomControlsContainer').classList.remove('hidden');
+                document.getElementById('singleDayViewWrapper').classList.remove('hidden');
+                document.getElementById('statsBarSection').classList.remove('hidden');
+                document.getElementById('allDaysOverviewWrapper').classList.add('hidden');
+            } else {
+                document.getElementById('dayHoursConfigArea').classList.add('hidden');
+                document.getElementById('zoomControlsContainer').classList.add('hidden');
+                document.getElementById('singleDayViewWrapper').classList.add('hidden');
+                document.getElementById('statsBarSection').classList.add('hidden');
+                document.getElementById('allDaysOverviewWrapper').classList.remove('hidden');
+            }
+        }
+
+        // Render Legend Categories
+        function renderCategoriesLegend() {
+            const container = document.getElementById('categoriesLegendContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            appData.categories.forEach(cat => {
+                const pill = document.createElement('div');
+                pill.className = 'flex items-center gap-1 text-[11px] font-medium text-slate-700 bg-white px-2 py-0.5 rounded-full border border-slate-200';
+                pill.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cat.color};"></span>
+                    <span>${cat.name}</span>
+                `;
+                container.appendChild(pill);
+            });
+        }
+
+        // Compute Tracks for non-colliding layout
+        function assignTracks(events) {
+            events.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+            const tracks = [];
+            events.forEach(ev => {
+                const evStart = timeToMinutes(ev.startTime);
+                const evEnd = timeToMinutes(ev.endTime);
+                let placed = false;
+                for (let i = 0; i < tracks.length; i++) {
+                    if (tracks[i] <= evStart) {
+                        ev.track = i;
+                        tracks[i] = evEnd;
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) {
+                    ev.track = tracks.length;
+                    tracks.push(evEnd);
+                }
+            });
+            return Math.max(1, tracks.length);
+        }
+
+        // Render Timeline Ruler & Exact Synchronized Grid
+        function renderTimeline() {
+            if (appData.activeDayIndex === 999) return;
+
+            const day = getCurrentDay();
+            const ruler = document.getElementById('timeRuler');
+            const tracksContainer = document.getElementById('timelineTracks');
+            const viewport = document.getElementById('timelineViewport');
+
+            ruler.innerHTML = '';
+            tracksContainer.innerHTML = '';
+
+            // Clean Dedicated Grid Layer for 100% pixel-perfect synchronization
+            const gridLayer = document.createElement('div');
+            gridLayer.className = 'absolute inset-0 pointer-events-none';
+            tracksContainer.appendChild(gridLayer);
+
+            const startHour = day.startHour;
+            const endHour = day.endHour;
+            const totalHours = Math.max(1, endHour - startHour);
+
+            // Dynamic base pixel per hour according to zoom
+            const basePxPerHour = Math.round(100 * appData.zoom);
+            const totalWidth = totalHours * basePxPerHour;
+            viewport.style.width = `${totalWidth}px`;
+            viewport.style.minWidth = `${totalWidth}px`;
+
+            // Draw Ruler Marks & Exact Corresponding Grid Lines
+            for (let h = startHour; h <= endHour; h++) {
+                const hourX = (h - startHour) * basePxPerHour;
+
+                // 1. Grid Line running down the tracks area (Exact same hourX!)
+                const gridLine = document.createElement('div');
+                gridLine.className = 'absolute top-0 bottom-0 pointer-events-none bg-slate-200';
+                gridLine.style.width = '1px';
+                gridLine.style.right = `${hourX}px`;
+                gridLayer.appendChild(gridLine);
+
+                // 2. Main Hour Tick on Ruler (14px height, 2px wide, dark slate)
+                const tickEl = document.createElement('div');
+                tickEl.className = 'absolute bottom-0 pointer-events-none bg-slate-600';
+                tickEl.style.width = '2px';
+                tickEl.style.height = '14px';
+                tickEl.style.right = `${hourX - 1}px`; // Centered precisely on hourX
+                ruler.appendChild(tickEl);
+
+                // 3. Hour Text Label (Fixed width 60px, text-align center, perfectly centered on hourX)
+                const labelEl = document.createElement('div');
+                labelEl.className = 'absolute top-1 font-mono font-bold text-xs text-slate-700 text-center select-none pointer-events-none';
+                labelEl.style.width = '60px';
+                labelEl.style.right = `${hourX - 30}px`; // Center of 60px is at hourX
+                labelEl.textContent = `${String(h).padStart(2, '0')}:۰۰`;
+                ruler.appendChild(labelEl);
+
+                // 4. Quarter-Hour Ticks & 30-min Grid Line (Between h and h+1)
+                if (h < endHour) {
+                    // 15-minute mark (Quarter past: 15 mins after h)
+                    const x15 = Math.round(hourX + 0.25 * basePxPerHour);
+                    const tick15 = document.createElement('div');
+                    tick15.className = 'absolute bottom-0 pointer-events-none bg-slate-300';
+                    tick15.style.width = '1px';
+                    tick15.style.height = '5px';
+                    tick15.style.right = `${x15}px`;
+                    ruler.appendChild(tick15);
+
+                    // 30-minute mark (Half past - TALLER: 11px, medium color)
+                    const x30 = Math.round(hourX + 0.50 * basePxPerHour);
+                    const tick30 = document.createElement('div');
+                    tick30.className = 'absolute bottom-0 pointer-events-none bg-slate-400';
+                    tick30.style.width = '1.5px';
+                    tick30.style.height = '11px';
+                    tick30.style.right = `${x30 - 0.75}px`;
+                    ruler.appendChild(tick30);
+
+                    // 30-minute subtle dashed grid line in tracks
+                    const halfGridLine = document.createElement('div');
+                    halfGridLine.className = 'absolute top-0 bottom-0 pointer-events-none border-r border-dashed border-slate-200/80';
+                    halfGridLine.style.right = `${x30}px`;
+                    gridLayer.appendChild(halfGridLine);
+
+                    // 45-minute mark (Quarter to: 45 mins after h)
+                    const x45 = Math.round(hourX + 0.75 * basePxPerHour);
+                    const tick45 = document.createElement('div');
+                    tick45.className = 'absolute bottom-0 pointer-events-none bg-slate-300';
+                    tick45.style.width = '1px';
+                    tick45.style.height = '5px';
+                    tick45.style.right = `${x45}px`;
+                    ruler.appendChild(tick45);
+                }
+            }
+
+            // Assign tracks to prevent overlap
+            const numTracks = assignTracks(day.events);
+            const trackHeight = 72;
+            const totalTrackHeight = Math.max(260, numTracks * trackHeight + 40);
+            tracksContainer.style.height = `${totalTrackHeight}px`;
+
+            function timeToRightPx(timeStr) {
+                const mins = timeToMinutes(timeStr);
+                const dayStartMins = startHour * 60;
+                const minsFromStart = mins - dayStartMins;
+                return (minsFromStart / 60) * basePxPerHour;
+            }
+
+            // Render Event Boxes
+            day.events.forEach(ev => {
+                const catMeta = getCategoryMeta(ev.category);
+                const rightPx = timeToRightPx(ev.startTime);
+                const widthPx = Math.max(50, timeToRightPx(ev.endTime) - rightPx);
+                const topPx = (ev.track || 0) * trackHeight + 10;
+
+                const box = document.createElement('div');
+                box.className = `event-box absolute rounded-xl p-2.5 shadow-sm text-white transition-all cursor-grab active:cursor-grabbing flex flex-col justify-between overflow-hidden group select-none border border-black/10`;
+                box.style.backgroundColor = catMeta.color;
+                box.style.right = `${rightPx}px`;
+                box.style.width = `${widthPx}px`;
+                box.style.top = `${topPx}px`;
+                box.style.height = `${trackHeight - 12}px`;
+                box.dataset.eventId = ev.id;
+
+                // REMOVED TIME BADGE INSIDE BOX (Per user request: time is seen from the ruler)
+                // Inside box: Title + Location/Person + Checklist count + Ideas indicator
+                const ideasCount = (ev.ideas && ev.ideas.length > 0) ? ev.ideas.length : 0;
+                const checklistCount = (ev.checklist && ev.checklist.length > 0) ? ev.checklist.length : 0;
+
+                box.innerHTML = `
+                    <!-- Resize Handle Left (End Time in RTL) -->
+                    <div class="resize-handle-left" title="تنظیم ساعت پایان" data-handle="left"></div>
+
+                    <!-- Main Title inside box (Clean & Legible) -->
+                    <div class="flex items-center justify-between gap-1 pointer-events-none">
+                        <span class="font-bold text-xs truncate leading-snug drop-shadow-sm">${ev.title}</span>
+                    </div>
+
+                    <!-- Bottom badges: Location / In-Charge / Checklist / Ideas -->
+                    <div class="flex items-center justify-between gap-1 text-[10px] opacity-95 mt-1">
+                        <span class="truncate flex items-center gap-1 pointer-events-none">
+                            ${ev.location ? `📍 ${ev.location}` : (ev.inCharge ? `👤 ${ev.inCharge}` : '')}
+                        </span>
+                        <div class="flex items-center gap-1 flex-shrink-0 pointer-events-auto">
+                            <!-- Idea button (Clickable to view/edit ideas) -->
+                            <button type="button" onclick="openQuickPopup(event, '${ev.id}', 'ideas')" 
+                                    class="${ideasCount > 0 ? 'bg-amber-400 text-amber-950 font-bold px-1.5 py-0.5' : 'bg-black/25 text-white/80 hover:text-white px-1 py-0.5'} rounded text-[9px] shadow-xs hover:scale-105 active:scale-95 transition flex items-center gap-0.5 cursor-pointer"
+                                    title="${ideasCount > 0 ? ideasCount + ' ایده ثبت‌شده (کلیک برای مشاهده و ثبت)' : 'ثبت ایده یا گزینه پیشنهادی'}">
+                                <span>💡</span>
+                                <span>${ideasCount > 0 ? ideasCount : '+'}</span>
+                            </button>
+
+                            <!-- Checklist / Tasks button (Clickable to view/toggle tasks) -->
+                            <button type="button" onclick="openQuickPopup(event, '${ev.id}', 'checklist')" 
+                                    class="${checklistCount > 0 ? 'bg-black/35 hover:bg-black/50 text-white font-bold px-1.5 py-0.5' : 'bg-black/25 text-white/80 hover:text-white px-1 py-0.5'} rounded text-[9px] shadow-xs hover:scale-105 active:scale-95 transition flex items-center gap-0.5 cursor-pointer"
+                                    title="${checklistCount > 0 ? ev.checklist.filter(c => c.done).length + ' از ' + checklistCount + ' مورد آماده (کلیک برای چک‌لیست)' : 'ثبت چک‌لیست وسایل و تسک‌ها'}">
+                                <span>🎒</span>
+                                <span>${checklistCount > 0 ? `${ev.checklist.filter(c => c.done).length}/${checklistCount}` : '+'}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Resize Handle Right (Start Time in RTL) -->
+                    <div class="resize-handle-right" title="تنظیم ساعت شروع" data-handle="right"></div>
+                `;
+
+                // Floating tooltip on hover
+                box.addEventListener('mouseenter', (e) => {
+                    showTooltip(e, `${ev.title} (${ev.startTime} الی ${ev.endTime})`);
+                });
+                box.addEventListener('mousemove', (e) => {
+                    updateTooltipPos(e);
+                });
+                box.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+
+                // Right-Click Context Menu (Edit & Delete options)
+                box.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openTimelineContextMenu(e, ev.id);
+                });
+
+                // Click to open modal
+                box.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('resize-handle-left') || e.target.classList.contains('resize-handle-right')) return;
+                    if (box.dataset.wasDragged === 'true') {
+                        delete box.dataset.wasDragged;
+                        return;
+                    }
+                    openEditEventModal(ev.id);
+                });
+
+                // Attach Drag & Resize Event Listeners
+                setupInteractions(box, ev, basePxPerHour, startHour, endHour);
+
+                tracksContainer.appendChild(box);
+            });
+        }
+
+        // Floating Tooltip Helpers
+        const tooltipEl = document.getElementById('floatingTimeTooltip');
+        function showTooltip(e, text) {
+            tooltipEl.textContent = text;
+            tooltipEl.style.opacity = '1';
+            updateTooltipPos(e);
+        }
+        function updateTooltipPos(e) {
+            tooltipEl.style.left = `${e.clientX + 12}px`;
+            tooltipEl.style.top = `${e.clientY + 12}px`;
+        }
+        function hideTooltip() {
+            tooltipEl.style.opacity = '0';
+        }
+
+        // Drag & Resize Engine (RTL-aware with 15-min snap)
+        function setupInteractions(box, eventObj, pxPerHour, startHour, endHour) {
+            const snapMinutes = 15;
+            const pxPerMinute = pxPerHour / 60;
+
+            let isDragging = false;
+            let isResizingLeft = false;  // End Time in RTL
+            let isResizingRight = false; // Start Time in RTL
+            let startMouseX = 0;
+            let initialStartMinutes = 0;
+            let initialEndMinutes = 0;
+
+            const leftHandle = box.querySelector('.resize-handle-left');
+            const rightHandle = box.querySelector('.resize-handle-right');
+
+            leftHandle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                isResizingLeft = true;
+                startMouseX = e.clientX;
+                initialEndMinutes = timeToMinutes(eventObj.endTime);
+                document.body.style.cursor = 'ew-resize';
+                addWindowListeners();
+            });
+
+            rightHandle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                isResizingRight = true;
+                startMouseX = e.clientX;
+                initialStartMinutes = timeToMinutes(eventObj.startTime);
+                document.body.style.cursor = 'ew-resize';
+                addWindowListeners();
+            });
+
+            box.addEventListener('mousedown', (e) => {
+                if (e.target === leftHandle || e.target === rightHandle) return;
+                isDragging = true;
+                startMouseX = e.clientX;
+                initialStartMinutes = timeToMinutes(eventObj.startTime);
+                initialEndMinutes = timeToMinutes(eventObj.endTime);
+                addWindowListeners();
+            });
+
+            function onMouseMove(e) {
+                if (!isDragging && !isResizingLeft && !isResizingRight) return;
+                const deltaX = e.clientX - startMouseX;
+
+                if (isDragging) {
+                    box.dataset.wasDragged = 'true';
+                    const deltaMinutes = Math.round((-deltaX / pxPerMinute) / snapMinutes) * snapMinutes;
+                    const duration = initialEndMinutes - initialStartMinutes;
+
+                    let newStart = initialStartMinutes + deltaMinutes;
+                    let newEnd = newStart + duration;
+
+                    const minDayMins = startHour * 60;
+                    const maxDayMins = endHour * 60;
+                    if (newStart < minDayMins) {
+                        newStart = minDayMins;
+                        newEnd = newStart + duration;
+                    }
+                    if (newEnd > maxDayMins) {
+                        newEnd = maxDayMins;
+                        newStart = newEnd - duration;
+                    }
+
+                    eventObj.startTime = minutesToTime(newStart);
+                    eventObj.endTime = minutesToTime(newEnd);
+
+                    const curDayStartMins = startHour * 60;
+                    box.style.right = `${((newStart - curDayStartMins) / 60) * pxPerHour}px`;
+                    showTooltip(e, `زمان جدید: ${eventObj.startTime} الی ${eventObj.endTime}`);
+                }
+
+                if (isResizingRight) {
+                    // Start Time resize
+                    const deltaMinutes = Math.round((-deltaX / pxPerMinute) / snapMinutes) * snapMinutes;
+                    let newStart = initialStartMinutes + deltaMinutes;
+
+                    const minDayMins = startHour * 60;
+                    const endMins = timeToMinutes(eventObj.endTime);
+                    if (newStart < minDayMins) newStart = minDayMins;
+                    if (newStart >= endMins - 15) newStart = endMins - 15;
+
+                    eventObj.startTime = minutesToTime(newStart);
+                    const curDayStartMins = startHour * 60;
+                    const newRight = ((newStart - curDayStartMins) / 60) * pxPerHour;
+                    const newWidth = ((endMins - newStart) / 60) * pxPerHour;
+
+                    box.style.right = `${newRight}px`;
+                    box.style.width = `${newWidth}px`;
+                    showTooltip(e, `ساعت شروع: ${eventObj.startTime} (پایان: ${eventObj.endTime})`);
+                }
+
+                if (isResizingLeft) {
+                    // End Time resize
+                    const deltaMinutes = Math.round((-deltaX / pxPerMinute) / snapMinutes) * snapMinutes;
+                    let newEnd = initialEndMinutes + deltaMinutes;
+
+                    const maxDayMins = endHour * 60;
+                    const startMins = timeToMinutes(eventObj.startTime);
+                    if (newEnd > maxDayMins) newEnd = maxDayMins;
+                    if (newEnd <= startMins + 15) newEnd = startMins + 15;
+
+                    eventObj.endTime = minutesToTime(newEnd);
+                    const newWidth = ((newEnd - startMins) / 60) * pxPerHour;
+
+                    box.style.width = `${newWidth}px`;
+                    showTooltip(e, `ساعت پایان: ${eventObj.endTime} (شروع: ${eventObj.startTime})`);
+                }
+            }
+
+            function onMouseUp() {
+                if (isDragging || isResizingLeft || isResizingRight) {
+                    isDragging = false;
+                    isResizingLeft = false;
+                    isResizingRight = false;
+                    document.body.style.cursor = 'default';
+                    hideTooltip();
+                    removeWindowListeners();
+                    saveState();
+                    renderAll();
+                }
+            }
+
+            function addWindowListeners() {
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+            }
+
+            function removeWindowListeners() {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
+        }
+
+        // Render Table & Ideas Section (Requested feature!)
+        function renderTableAndStats() {
+            if (appData.activeDayIndex === 999) return;
+
+            const day = getCurrentDay();
+            const tbody = document.getElementById('eventsTableBody');
+            tbody.innerHTML = '';
+
+            let totalMinutes = 0;
+            let totalCost = 0;
+            let totalIdeas = 0;
+
+            const sortedEvents = [...day.events].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+            if (sortedEvents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-8 text-slate-400">
+                            هنوز برنامه‌ای برای این روز ثبت نشده است. روی «افزودن برنامه جدید» کلیک کنید.
+                        </td>
+                    </tr>
+                `;
+            }
+
+            sortedEvents.forEach(ev => {
+                const diff = timeToMinutes(ev.endTime) - timeToMinutes(ev.startTime);
+                if (diff > 0) totalMinutes += diff;
+                if (ev.cost) totalCost += Number(ev.cost);
+                if (ev.ideas) totalIdeas += ev.ideas.length;
+
+                const catMeta = getCategoryMeta(ev.category);
+
+                // Row for the event
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition border-b border-slate-100 group';
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-mono font-bold text-slate-800 whitespace-nowrap align-top">
+                        ${ev.startTime} - ${ev.endTime}
+                        <span class="block text-[10px] text-slate-400 font-normal">(${formatDuration(ev.startTime, ev.endTime)})</span>
+                    </td>
+                    <td class="py-2.5 px-3 align-top">
+                        <div class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${catMeta.color};"></span>
+                            <span>${ev.title}</span>
+                        </div>
+                        ${ev.notes ? `<div class="text-[11px] text-slate-500 mt-1">${ev.notes}</div>` : ''}
+
+                        <!-- IDEAS SECTION UNDER EVENT (User Request!) -->
+                        <div class="mt-2.5 p-2 bg-amber-50/70 border border-amber-200/80 rounded-lg text-xs">
+                            <div class="flex items-center justify-between font-bold text-[11px] text-amber-900 mb-1">
+                                <span class="flex items-center gap-1">
+                                    <span>💡</span>
+                                    <span>بانک ایده‌ها و گزینه‌های پیشنهادی (برنامه‌ریزی اولیه):</span>
+                                </span>
+                                <button type="button" onclick="quickAddIdea('${ev.id}')" class="text-[10px] text-amber-700 hover:text-amber-900 font-semibold no-print">
+                                    + ثبت ایده جدید
+                                </button>
+                            </div>
+                            <div id="ideasContainer_${ev.id}" class="space-y-1">
+                                ${ev.ideas && ev.ideas.length > 0 ? ev.ideas.map((idea, idx) => `
+                                    <div class="flex items-center justify-between bg-white px-2 py-1 rounded border border-amber-200/60 text-[11px] text-slate-700">
+                                        <span class="flex items-center gap-1.5">
+                                            <span class="text-amber-500">•</span>
+                                            <span>${idea.text}</span>
+                                        </span>
+                                        <button onclick="deleteIdea('${ev.id}', ${idx})" class="text-slate-400 hover:text-rose-500 p-0.5 no-print" title="حذف این ایده">
+                                            ×
+                                        </button>
+                                    </div>
+                                `).join('') : `
+                                    <div class="text-[10px] text-amber-700/70 italic">
+                                        ایده‌ای ثبت نشده؛ برای زمان‌هایی که جزئیات دقیق مشخص نیست، گزینه‌ها را اینجا یادداشت کنید.
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-2.5 px-3 align-top">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold text-white whitespace-nowrap shadow-xs" style="background-color: ${catMeta.color};">
+                            ${catMeta.name}
+                        </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-slate-700 align-top">${ev.inCharge || '-'}</td>
+                    <td class="py-2.5 px-3 text-slate-700 align-top">${ev.location || '-'}</td>
+                    <td class="py-2.5 px-3 text-slate-700 align-top">${ev.audience || '-'}</td>
+                    <td class="py-2.5 px-3 font-mono text-slate-700 whitespace-nowrap align-top">${formatTomans(ev.cost)} ت</td>
+                    <td class="py-2.5 px-3 align-top">
+                        ${ev.checklist && ev.checklist.length > 0 ? `
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                ${ev.checklist.map((c, cIdx) => `
+                                    <label class="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-1.5 py-0.5 rounded text-[10px] cursor-pointer ${c.done ? 'line-through text-slate-400' : 'text-slate-700'}">
+                                        <input type="checkbox" ${c.done ? 'checked' : ''} onchange="toggleTableChecklist('${ev.id}', ${cIdx})" class="rounded text-sky-600 focus:ring-0 w-3 h-3">
+                                        <span>${c.text}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        ` : '<span class="text-slate-300">-</span>'}
+                    </td>
+                    <td class="py-2.5 px-3 text-center no-print align-top">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="openEditEventModal('${ev.id}')" class="p-1 hover:bg-sky-50 text-sky-600 rounded transition" title="ویرایش کامل">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button onclick="duplicateEvent('${ev.id}')" class="p-1 hover:bg-slate-100 text-slate-500 rounded transition" title="کپی کردن برنامه">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </button>
+                            <button onclick="deleteEventDirect('${ev.id}')" class="p-1 hover:bg-rose-50 text-rose-500 hover:text-rose-700 rounded transition" title="حذف این برنامه">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+            // Update Stats Badges
+            document.getElementById('statEventCount').textContent = sortedEvents.length;
+            const hoursVal = (totalMinutes / 60).toFixed(1);
+            document.getElementById('statTotalHours').textContent = `${hoursVal} ساعت`;
+            document.getElementById('statTotalCost').textContent = `${formatTomans(totalCost)} تومان`;
+            document.getElementById('statTotalIdeas').textContent = `${totalIdeas} ایده و گزینه`;
+        }
+
+        // Quick Add / Delete Idea directly from table
+        function quickAddIdea(eventId) {
+            const ideaText = prompt('ایده یا گزینه پیشنهادی خود را بنویسید:');
+            if (ideaText && ideaText.trim()) {
+                const day = getCurrentDay();
+                const ev = day.events.find(e => e.id === eventId);
+                if (ev) {
+                    if (!ev.ideas) ev.ideas = [];
+                    ev.ideas.push({ id: 'i_' + Date.now(), text: ideaText.trim() });
+                    saveState();
+                    renderAll();
+                }
+            }
+        }
+
+        function deleteIdea(eventId, idx) {
+            const day = getCurrentDay();
+            const ev = day.events.find(e => e.id === eventId);
+            if (ev && ev.ideas) {
+                ev.ideas.splice(idx, 1);
+                saveState();
+                renderAll();
+            }
+        }
+
+        // Checklist toggle in table
+        function toggleTableChecklist(eventId, checklistIndex) {
+            const day = getCurrentDay();
+            const ev = day.events.find(e => e.id === eventId);
+            if (ev && ev.checklist && ev.checklist[checklistIndex]) {
+                ev.checklist[checklistIndex].done = !ev.checklist[checklistIndex].done;
+                saveState();
+                renderAll();
+            }
+        }
+
+        // RENDER ALL DAYS (Overview Tab - User Request!)
+        function renderAllDaysOverview() {
+            const container = document.getElementById('allDaysContainer');
+            container.innerHTML = '';
+
+            appData.days.forEach((day, dIdx) => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-4 page-break';
+
+                const totalMins = day.events.reduce((acc, ev) => acc + (timeToMinutes(ev.endTime) - timeToMinutes(ev.startTime)), 0);
+                const totalCost = day.events.reduce((acc, ev) => acc + (Number(ev.cost) || 0), 0);
+                const totalIdeas = day.events.reduce((acc, ev) => acc + ((ev.ideas && ev.ideas.length) || 0), 0);
+
+                dayCard.innerHTML = `
+                    <div class="flex items-center justify-between border-b pb-3 mb-3">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">${day.name}</h3>
+                            <span class="text-xs text-slate-500">${day.subtitle || ''} (ساعت ${day.startHour}:۰۰ الی ${day.endHour}:۰۰)</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="bg-slate-100 px-2 py-1 rounded text-slate-700">برنامه‌ها: <b>${day.events.length}</b></span>
+                            <span class="bg-slate-100 px-2 py-1 rounded text-slate-700">مجموع زمان: <b>${(totalMins/60).toFixed(1)} ساعت</b></span>
+                            <span class="bg-slate-100 px-2 py-1 rounded text-slate-700">هزینه: <b>${formatTomans(totalCost)} ت</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Mini Gantt View for Day -->
+                    <div class="overflow-x-auto pb-4">
+                        <div class="relative min-w-[900px] border border-slate-200 rounded-xl p-3 bg-slate-50/50">
+                            <!-- Mini Ruler -->
+                            <div class="relative h-6 border-b border-slate-300 flex">
+                                ${Array.from({ length: day.endHour - day.startHour + 1 }, (_, i) => {
+                                    const h = day.startHour + i;
+                                    const pct = (i / (day.endHour - day.startHour)) * 100;
+                                    return `
+                                        <div class="absolute top-0 bottom-0 text-[10px] font-mono text-slate-500" style="right: ${pct}%">
+                                            <span class="translate-x-1/2 block font-bold">${h}:۰۰</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <!-- Mini Tracks -->
+                            <div class="relative mt-2" style="height: ${(assignTracks(day.events) * 44 + 10)}px;">
+                                ${day.events.map(ev => {
+                                    const catMeta = getCategoryMeta(ev.category);
+                                    const dayStart = day.startHour * 60;
+                                    const dayTotal = (day.endHour - day.startHour) * 60;
+                                    const rightPct = ((timeToMinutes(ev.startTime) - dayStart) / dayTotal) * 100;
+                                    const widthPct = Math.max(3, ((timeToMinutes(ev.endTime) - timeToMinutes(ev.startTime)) / dayTotal) * 100);
+                                    const topPx = (ev.track || 0) * 44;
+
+                                    return `
+                                        <div class="absolute rounded-lg px-2 py-1 text-white text-[11px] font-bold shadow-sm truncate border border-black/10 flex items-center justify-between"
+                                             style="right: ${rightPct}%; width: ${widthPct}%; top: ${topPx}px; height: 38px; background-color: ${catMeta.color};"
+                                             title="${ev.title} (${ev.startTime} - ${ev.endTime})">
+                                            <span class="truncate">${ev.title}</span>
+                                            <span class="text-[9px] opacity-80 font-mono">${ev.startTime}-${ev.endTime}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini Table of Events & Ideas -->
+                    <div class="mt-3 overflow-x-auto">
+                        <table class="w-full text-right text-xs">
+                            <thead class="bg-slate-100 text-slate-700 font-bold border-b">
+                                <tr>
+                                    <th class="py-1.5 px-2 w-24">ساعت</th>
+                                    <th class="py-1.5 px-2">عنوان برنامه</th>
+                                    <th class="py-1.5 px-2">دسته‌بندی</th>
+                                    <th class="py-1.5 px-2">مسئول</th>
+                                    <th class="py-1.5 px-2">مکان</th>
+                                    <th class="py-1.5 px-2">ایده‌های ثبت‌شده</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-600">
+                                ${day.events.map(ev => {
+                                    const catMeta = getCategoryMeta(ev.category);
+                                    return `
+                                        <tr>
+                                            <td class="py-1.5 px-2 font-mono font-bold whitespace-nowrap">${ev.startTime} - ${ev.endTime}</td>
+                                            <td class="py-1.5 px-2 font-bold text-slate-800">${ev.title}</td>
+                                            <td class="py-1.5 px-2">
+                                                <span class="text-white px-2 py-0.5 rounded text-[10px] font-semibold" style="background-color: ${catMeta.color};">${catMeta.name}</span>
+                                            </td>
+                                            <td class="py-1.5 px-2">${ev.inCharge || '-'}</td>
+                                            <td class="py-1.5 px-2">${ev.location || '-'}</td>
+                                            <td class="py-1.5 px-2">
+                                                ${ev.ideas && ev.ideas.length > 0 ? ev.ideas.map(i => `
+                                                    <span class="inline-block bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] mr-1 mb-1">
+                                                        💡 ${i.text}
+                                                    </span>
+                                                `).join('') : '<span class="text-slate-300">-</span>'}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                container.appendChild(dayCard);
+            });
+        }
+
+        // Render Everything
+        function renderAll() {
+            renderDaysTabs();
+            renderCategoriesLegend();
+            if (appData.activeDayIndex === 999) {
+                renderAllDaysOverview();
+            } else {
+                renderTimeline();
+                renderTableAndStats();
+            }
+        }
+
+        // PRINT TRIGGER WITH SPECIAL CHECKS
+        function triggerPrint() {
+            // Before printing, render both single day or all days so everything is in DOM
+            if (appData.activeDayIndex !== 999) {
+                // temporarily adjust viewport width for crisp printing
+                const vp = document.getElementById('timelineViewport');
+                if (vp) vp.style.minWidth = '100%';
+            }
+            window.print();
+        }
+
+        // Modal Form Management (Add / Edit)
+        let activeChecklistDraft = [];
+        let activeIdeasDraft = [];
+
+        function populateCategoryDropdown(selectedVal) {
+            const sel = document.getElementById('eventCategorySelect');
+            sel.innerHTML = '';
+            appData.categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = `${cat.name}`;
+                if (cat.id === selectedVal) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function openNewEventModal() {
+            const day = getCurrentDay();
+            document.getElementById('modalTitle').innerHTML = '<span>➕</span><span>افزودن برنامه جدید</span>';
+            document.getElementById('editEventId').value = '';
+            document.getElementById('eventTitleInput').value = '';
+
+            populateCategoryDropdown(appData.categories[0]?.id || 'study');
+
+            let defaultStart = `${String(day.startHour).padStart(2, '0')}:۰۰`;
+            let defaultEnd = `${String(Math.min(day.endHour, day.startHour + 2)).padStart(2, '0')}:۰۰`;
+            if (day.events.length > 0) {
+                const sorted = [...day.events].sort((a,b) => timeToMinutes(a.endTime) - timeToMinutes(b.endTime));
+                defaultStart = sorted[sorted.length - 1].endTime;
+                const endMins = Math.min(day.endHour * 60, timeToMinutes(defaultStart) + 90);
+                defaultEnd = minutesToTime(endMins);
+            }
+
+            document.getElementById('eventStartTimeInput').value = defaultStart;
+            document.getElementById('eventEndTimeInput').value = defaultEnd;
+            document.getElementById('eventInChargeInput').value = '';
+            document.getElementById('eventLocationInput').value = '';
+            document.getElementById('eventAudienceInput').value = '';
+            document.getElementById('eventCostInput').value = '';
+            document.getElementById('eventNotesInput').value = '';
+            document.getElementById('deleteEventBtn').classList.add('hidden');
+
+            activeChecklistDraft = [];
+            activeIdeasDraft = [];
+            renderModalChecklist();
+            renderModalIdeas();
+            updateCalculatedDuration();
+
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        function openEditEventModal(eventId) {
+            const day = getCurrentDay();
+            const ev = day.events.find(e => e.id === eventId);
+            if (!ev) return;
+
+            document.getElementById('modalTitle').innerHTML = '<span>✏️</span><span>ویرایش جزئیات برنامه</span>';
+            document.getElementById('editEventId').value = ev.id;
+            document.getElementById('eventTitleInput').value = ev.title;
+
+            populateCategoryDropdown(ev.category);
+
+            document.getElementById('eventStartTimeInput').value = ev.startTime;
+            document.getElementById('eventEndTimeInput').value = ev.endTime;
+            document.getElementById('eventInChargeInput').value = ev.inCharge || '';
+            document.getElementById('eventLocationInput').value = ev.location || '';
+            document.getElementById('eventAudienceInput').value = ev.audience || '';
+            document.getElementById('eventCostInput').value = ev.cost || '';
+            document.getElementById('eventNotesInput').value = ev.notes || '';
+            document.getElementById('deleteEventBtn').classList.remove('hidden');
+
+            activeChecklistDraft = JSON.parse(JSON.stringify(ev.checklist || []));
+            activeIdeasDraft = JSON.parse(JSON.stringify(ev.ideas || []));
+            renderModalChecklist();
+            renderModalIdeas();
+            updateCalculatedDuration();
+
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+        }
+
+        function updateCalculatedDuration() {
+            const start = document.getElementById('eventStartTimeInput').value;
+            const end = document.getElementById('eventEndTimeInput').value;
+            document.getElementById('calculatedDurationBadge').textContent = formatDuration(start, end);
+        }
+
+        document.getElementById('eventStartTimeInput').addEventListener('input', updateCalculatedDuration);
+        document.getElementById('eventEndTimeInput').addEventListener('input', updateCalculatedDuration);
+
+        // Checklist in Modal
+        function renderModalChecklist() {
+            const listContainer = document.getElementById('checklistItemsList');
+            listContainer.innerHTML = '';
+            if (activeChecklistDraft.length === 0) {
+                listContainer.innerHTML = `<div class="text-xs text-slate-400 py-1">وسیله‌ای ثبت نشده است.</div>`;
+                return;
+            }
+            activeChecklistDraft.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 bg-white p-1.5 rounded-lg border border-slate-200';
+                row.innerHTML = `
+                    <input type="checkbox" ${item.done ? 'checked' : ''} onchange="activeChecklistDraft[${idx}].done = this.checked" class="rounded text-sky-600 focus:ring-0">
+                    <input type="text" value="${item.text}" oninput="activeChecklistDraft[${idx}].text = this.value" placeholder="نام وسیله یا هماهنگی موردنیاز..." class="flex-1 text-xs outline-none bg-transparent">
+                    <button type="button" onclick="removeChecklistItemInput(${idx})" class="text-slate-400 hover:text-rose-500 p-1">×</button>
+                `;
+                listContainer.appendChild(row);
+            });
+        }
+
+        function addChecklistItemInput() {
+            activeChecklistDraft.push({ text: '', done: false });
+            renderModalChecklist();
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('#checklistItemsList input[type="text"]');
+                if (inputs.length) inputs[inputs.length - 1].focus();
+            }, 50);
+        }
+
+        function removeChecklistItemInput(idx) {
+            activeChecklistDraft.splice(idx, 1);
+            renderModalChecklist();
+        }
+
+        // Ideas in Modal
+        function renderModalIdeas() {
+            const container = document.getElementById('ideasDraftList');
+            container.innerHTML = '';
+            if (activeIdeasDraft.length === 0) {
+                container.innerHTML = `<div class="text-xs text-amber-800/60 py-1 italic">ایده‌ای برای این برنامه ثبت نشده است. گزینه‌ها و طرح‌های اولیه را اضافه کنید.</div>`;
+                return;
+            }
+            activeIdeasDraft.forEach((idea, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 bg-white p-1.5 rounded-lg border border-amber-200';
+                row.innerHTML = `
+                    <span class="text-amber-500 text-sm">💡</span>
+                    <input type="text" value="${idea.text}" oninput="activeIdeasDraft[${idx}].text = this.value" placeholder="ایده، گزینه پیشنهادی یا سناریوی جایگزین..." class="flex-1 text-xs outline-none bg-transparent">
+                    <button type="button" onclick="removeIdeaDraftItem(${idx})" class="text-slate-400 hover:text-rose-500 p-1">×</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addIdeaDraftItem() {
+            activeIdeasDraft.push({ id: 'i_' + Date.now(), text: '' });
+            renderModalIdeas();
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('#ideasDraftList input[type="text"]');
+                if (inputs.length) inputs[inputs.length - 1].focus();
+            }, 50);
+        }
+
+        function removeIdeaDraftItem(idx) {
+            activeIdeasDraft.splice(idx, 1);
+            renderModalIdeas();
+        }
+
+        // Save Event Form
+        function saveEventForm(e) {
+            e.preventDefault();
+            const day = getCurrentDay();
+            const editId = document.getElementById('editEventId').value;
+            const title = document.getElementById('eventTitleInput').value.trim();
+            const category = document.getElementById('eventCategorySelect').value;
+            const startTime = document.getElementById('eventStartTimeInput').value;
+            const endTime = document.getElementById('eventEndTimeInput').value;
+            const inCharge = document.getElementById('eventInChargeInput').value.trim();
+            const location = document.getElementById('eventLocationInput').value.trim();
+            const audience = document.getElementById('eventAudienceInput').value.trim();
+            const cost = parseFloat(document.getElementById('eventCostInput').value) || 0;
+            const notes = document.getElementById('eventNotesInput').value.trim();
+
+            if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+                alert('ساعت پایان باید بعد از ساعت شروع باشد!');
+                return;
+            }
+
+            const cleanChecklist = activeChecklistDraft.filter(c => c.text.trim() !== '');
+            const cleanIdeas = activeIdeasDraft.filter(i => i.text.trim() !== '');
+
+            if (editId) {
+                const ev = day.events.find(x => x.id === editId);
+                if (ev) {
+                    ev.title = title;
+                    ev.category = category;
+                    ev.startTime = startTime;
+                    ev.endTime = endTime;
+                    ev.inCharge = inCharge;
+                    ev.location = location;
+                    ev.audience = audience;
+                    ev.cost = cost;
+                    ev.notes = notes;
+                    ev.checklist = cleanChecklist;
+                    ev.ideas = cleanIdeas;
+                }
+            } else {
+                const newEvent = {
+                    id: 'ev-' + Date.now(),
+                    title,
+                    category,
+                    startTime,
+                    endTime,
+                    inCharge,
+                    location,
+                    audience,
+                    cost,
+                    notes,
+                    checklist: cleanChecklist,
+                    ideas: cleanIdeas,
+                    track: 0
+                };
+                day.events.push(newEvent);
+            }
+
+            closeEventModal();
+            saveState();
+            renderAll();
+        }
+
+        // Delete Event
+        function deleteCurrentEvent() {
+            const editId = document.getElementById('editEventId').value;
+            if (!editId) return;
+            if (confirm('آیا از حذف این برنامه اطمینان دارید؟')) {
+                const day = getCurrentDay();
+                day.events = day.events.filter(e => e.id !== editId);
+                closeEventModal();
+                saveState();
+                renderAll();
+            }
+        }
+
+        // Duplicate Event
+        function duplicateEvent(eventId) {
+            const day = getCurrentDay();
+            const ev = day.events.find(e => e.id === eventId);
+            if (!ev) return;
+
+            const copy = JSON.parse(JSON.stringify(ev));
+            copy.id = 'ev-' + Date.now();
+            copy.title += ' (کپی)';
+            day.events.push(copy);
+            saveState();
+            renderAll();
+        }
+
+        // Category Manager Modal Logic (Requested feature!)
+        function openCategoryManagerModal() {
+            renderCategoryManagerList();
+            document.getElementById('categoryManagerModal').classList.remove('hidden');
+        }
+
+        function closeCategoryManagerModal() {
+            document.getElementById('categoryManagerModal').classList.add('hidden');
+            saveState();
+            renderAll();
+        }
+
+        function renderCategoryManagerList() {
+            const list = document.getElementById('categoriesListManager');
+            list.innerHTML = '';
+
+            appData.categories.forEach((cat, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200';
+                row.innerHTML = `
+                    <input type="color" value="${cat.color}" onchange="updateCategoryColor(${idx}, this.value)" class="w-8 h-8 rounded-lg cursor-pointer border-0 p-0" title="تغییر رنگ">
+                    <input type="text" value="${cat.name}" oninput="updateCategoryName(${idx}, this.value)" class="flex-1 px-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none bg-white font-medium">
+                    <button onclick="deleteCategoryFromManager(${idx})" class="text-slate-400 hover:text-rose-500 p-1" title="حذف دسته‌بندی">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function updateCategoryColor(idx, newColor) {
+            if (appData.categories[idx]) {
+                appData.categories[idx].color = newColor;
+            }
+        }
+
+        function updateCategoryName(idx, newName) {
+            if (appData.categories[idx]) {
+                appData.categories[idx].name = newName.trim();
+            }
+        }
+
+        function addNewCategoryFromManager() {
+            const name = document.getElementById('newCategoryNameInput').value.trim();
+            const color = document.getElementById('newCategoryColorInput').value;
+            if (!name) return;
+
+            const id = 'cat_' + Date.now();
+            appData.categories.push({ id, name, color, textColor: '#ffffff' });
+            document.getElementById('newCategoryNameInput').value = '';
+            renderCategoryManagerList();
+        }
+
+        function deleteCategoryFromManager(idx) {
+            if (appData.categories.length <= 1) {
+                alert('حداقل یک دسته‌بندی باید وجود داشته باشد.');
+                return;
+            }
+            if (confirm(`آیا دسته‌بندی «${appData.categories[idx].name}» حذف شود؟`)) {
+                appData.categories.splice(idx, 1);
+                renderCategoryManagerList();
+            }
+        }
+
+        // Day Hours Modal Logic
+        function editDayHours() {
+            const day = getCurrentDay();
+            document.getElementById('dayStartHourInput').value = day.startHour;
+            document.getElementById('dayEndHourInput').value = day.endHour;
+            document.getElementById('dayHoursModal').classList.remove('hidden');
+        }
+
+        function closeDayHoursModal() {
+            document.getElementById('dayHoursModal').classList.add('hidden');
+        }
+
+        function saveDayHours() {
+            const s = parseInt(document.getElementById('dayStartHourInput').value);
+            const e = parseInt(document.getElementById('dayEndHourInput').value);
+            if (isNaN(s) || isNaN(e) || s >= e) {
+                alert('ساعت شروع باید کمتر از ساعت پایان باشد.');
+                return;
+            }
+            const day = getCurrentDay();
+            day.startHour = s;
+            day.endHour = e;
+            closeDayHoursModal();
+            saveState();
+            renderAll();
+        }
+
+        // File Save / Load JSON
+        function saveToFile() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `timeline_raheroshan_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loaded = JSON.parse(e.target.result);
+                    if (loaded && loaded.days) {
+                        appData = loaded;
+                        saveState();
+                        renderAll();
+                        alert('اطلاعات با موفقیت بارگذاری شد.');
+                    } else {
+                        alert('فایل انتخاب‌شده قالب معتبری ندارد.');
+                    }
+                } catch (err) {
+                    alert('خطا در خواندن فایل JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Initialize App on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAll();
+            // Fetch latest cloud data from Cloudflare Worker
+            fetchCloudData(false);
+            // Setup auto-sync and tab focus polling
+            setupTimelineBackgroundSync();
+        });
+    </script>
+</body>
+</html>
