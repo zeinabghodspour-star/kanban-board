@@ -322,6 +322,21 @@
           </div>
         </div>
 
+        <!-- Help for Cloudflare Worker CORS -->
+        <details class="mb-3 text-[11px] bg-amber-50/80 border border-amber-200/80 rounded-xl p-2.5 text-amber-900 transition-all">
+          <summary class="font-bold cursor-pointer select-none flex items-center justify-between">
+            <span>⚠️ رفع خطای CORS (عدم اجازه متد PATCH یا PUT در وورکر)</span>
+            <span class="text-xs">▾</span>
+          </summary>
+          <div class="mt-2 text-slate-700 leading-relaxed font-normal space-y-1">
+            <p>در صورتی که مرورگر خطای <code class="bg-amber-100 px-1 py-0.5 rounded text-rose-700 font-mono">Method PATCH is not allowed by Access-Control-Allow-Methods</code> می‌دهد:</p>
+            <p>1. به پنل کلادفلر (<a href="https://dash.cloudflare.com" target="_blank" class="text-indigo-600 underline font-bold">dash.cloudflare.com</a>) و مسیر <strong>Workers & Pages &gt; kanba-worker &gt; Edit code</strong> بروید.</p>
+            <p>2. در پاسخ‌های وورکر (به‌ویژه پاسخ متد OPTIONS)، هدر زیر را بررسی کنید و مقدار متدها را به شکل زیر قرار دهید:</p>
+            <pre class="bg-slate-900 text-emerald-400 p-2 rounded-lg font-mono text-[10px] mt-1 overflow-x-auto" dir="ltr">"Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS"</pre>
+            <p>3. دکمه <strong>Deploy</strong> را بزنید تا تغییر اعمال شود.</p>
+          </div>
+        </details>
+
         <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
           <span>پشتیبانی خودکار از حالت آفلاین و ذخیره محلی (LocalStorage) فعال است.</span>
           <button id="resetWorkerUrlBtn" class="text-slate-500 hover:text-indigo-600 underline">
@@ -810,12 +825,13 @@
     }
 
     /**
-     * Cloudflare Worker Synchronization (REST via native Fetch)
+     * Cloudflare Worker Synchronization (REST via native Fetch with PUT / PATCH fallback)
      */
     let cloudSaveTimer = null;
     let pendingCloudPayload = {};
     let isSavingToCloud = false;
     let queuedCloudPayload = null;
+    let preferredSaveMethod = 'PUT'; // Default to PUT to avoid CORS preflight rejection when PATCH is not in worker's Allow-Methods
 
     function triggerCloudSave(partialPayload, immediate = true) {
       Object.assign(pendingCloudPayload, partialPayload);
@@ -836,6 +852,61 @@
       }
     }
 
+    async function executeSaveRequest(payloadToSend) {
+      // In Firebase RTDB, a PUT on root requires full state to avoid erasing keys
+      const fullState = {
+        kanban_tasks: tasks,
+        kanban_members: members,
+        kanban_tags: availableTags
+      };
+
+      if (preferredSaveMethod === 'PUT') {
+        try {
+          const res = await fetch(workerUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fullState)
+          });
+          if (res.ok) return res;
+          throw new Error(`خطای سرور PUT: ${res.status}`);
+        } catch (err) {
+          console.warn('PUT request failed or blocked, attempting PATCH fallback...', err);
+          const res = await fetch(workerUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadToSend)
+          });
+          if (res.ok) {
+            preferredSaveMethod = 'PATCH';
+            return res;
+          }
+          throw err;
+        }
+      } else {
+        try {
+          const res = await fetch(workerUrl, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadToSend)
+          });
+          if (res.ok) return res;
+          throw new Error(`خطای سرور PATCH: ${res.status}`);
+        } catch (err) {
+          console.warn('PATCH request failed or blocked, attempting PUT fallback...', err);
+          const res = await fetch(workerUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fullState)
+          });
+          if (res.ok) {
+            preferredSaveMethod = 'PUT';
+            return res;
+          }
+          throw err;
+        }
+      }
+    }
+
     async function flushCloudSave() {
       if (Object.keys(pendingCloudPayload).length === 0) return;
       
@@ -851,13 +922,7 @@
 
       setSyncStatus('syncing', 'در حال همگام‌سازی ابری...');
       try {
-        const res = await fetch(workerUrl, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payloadToSend)
-        });
+        const res = await executeSaveRequest(payloadToSend);
 
         if (!res.ok) {
           throw new Error(`پاسخ ناموفق سرور (${res.status})`);
@@ -868,7 +933,11 @@
       } catch (err) {
         console.warn('Cloud save error:', err);
         setSyncStatus('error', 'خطا در ذخیره ابری');
-        updateCloudDrawerStatus(false, 'خطا در ارسال داده به سرور: ' + err.message);
+        let errorMsg = 'خطا در ارسال داده به سرور: ' + err.message;
+        if (err.message && err.message.includes('Failed to fetch')) {
+          errorMsg = 'خطای CORS: متد ذخیره در وورکر مجاز نیست. لطفاً در پنل کلادفلر، متدهای PATCH و PUT را به هدر Access-Control-Allow-Methods اضافه کنید.';
+        }
+        updateCloudDrawerStatus(false, errorMsg);
       } finally {
         isSavingToCloud = false;
         if (queuedCloudPayload) {
@@ -958,11 +1027,7 @@
           kanban_members: members,
           kanban_tags: availableTags
         };
-        const res = await fetch(workerUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        const res = await executeSaveRequest(payload);
         if (!res.ok) throw new Error(`کد خطای ${res.status}`);
         setSyncStatus('online', 'متصل و همگام با Cloudflare Worker');
         updateCloudDrawerStatus(true, 'تمام داده‌ها با موفقیت بر روی سرور ذخیره شدند.');
