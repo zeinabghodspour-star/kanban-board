@@ -13,9 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDK (compat mode for quick & reliable client-side integration) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <!-- Cloudflare Worker API Integration (Native Fetch, No External Heavy SDKs) -->
 
   <script>
     tailwind.config = {
@@ -79,7 +77,7 @@
         background-color: #ffffff !important;
         color: #0f172a !important;
       }
-      header, #membersTagsDrawer, #firebaseSettingsBanner, .open-quick-add, .quick-add-btn, .quick-add-container, .delete-task-btn, .move-prev-btn, .move-next-btn, .add-subtask-wrapper, .delete-subtask-btn, .add-tag-btn, .remove-tag-btn {
+      header, #membersTagsDrawer, #cloudSettingsBanner, .open-quick-add, .quick-add-btn, .quick-add-container, .delete-task-btn, .move-prev-btn, .move-next-btn, .add-subtask-wrapper, .delete-subtask-btn, .add-tag-btn, .remove-tag-btn {
         display: none !important;
       }
       main {
@@ -176,9 +174,9 @@
               <span>مدیریت افراد و تگ‌ها</span>
             </button>
 
-            <button id="menuItemFirebase" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
-              <span class="text-base">🔥</span>
-              <span>تنظیمات پایگاه‌داده فایربیس</span>
+            <button id="menuItemCloudServer" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 text-right w-full transition font-medium">
+              <span class="text-base">☁️</span>
+              <span>تنظیمات سرور ابری (Cloudflare Worker)</span>
             </button>
           </div>
 
@@ -277,63 +275,57 @@
       </div>
     </div>
 
-    <!-- Collapsible Firebase Settings Banner -->
-    <div id="firebaseSettingsBanner" class="hidden bg-slate-50 border-t border-slate-200 px-4 py-4 transition-all">
+    <!-- Collapsible Cloudflare Worker Settings Banner -->
+    <div id="cloudSettingsBanner" class="hidden bg-slate-50 border-t border-slate-200 px-4 py-4 transition-all">
       <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-200/80 pb-2">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🔥</span>
-            <h3 class="text-sm font-bold text-slate-800">تنظیمات اتصال دیتابیس Real-time فایربیس</h3>
+            <span class="text-xl">☁️</span>
+            <h3 class="text-sm font-bold text-slate-800">تنظیمات اتصال به سرور ابری (Cloudflare Worker)</h3>
           </div>
           <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
         </div>
         
         <p class="text-xs text-slate-600 mb-3 leading-relaxed">
-          اطلاعات دیتابیس اختصاصی شما (<code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">kanban-b11ae</code>) از پیش در سیستم تنظیم شده است. برای فعال‌سازی کامل، در کنسول فایربیس مطمئن شوید در تب <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">Rules</code> مقادیر روی <code class="bg-slate-200 px-1 py-0.5 rounded text-indigo-700">{ ".read": true, ".write": true }</code> باشد.
+          داده‌های بورد از طریق وورکر کلادفلر ذخیره و همگام‌سازی می‌شوند. تمامی تغییرات شما بلافاصله در سرور ثبت شده و بین تمامی کاربران به اشتراک گذاشته می‌شود. همچنین یک کپی آفلاین در مرورگر شما همیشه نگهداری می‌شود.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">Database URL (آدرس پایگاه‌داده فایربیس)</label>
+        <div class="mb-3">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">آدرس سرور Cloudflare Worker:</label>
+          <div class="flex flex-col sm:flex-row gap-2">
             <input 
-              type="text" 
-              id="fbDbUrl" 
-              value="https://kanban-b11ae-default-rtdb.firebaseio.com"
-              placeholder="https://your-project-default-rtdb.firebaseio.com" 
-              class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              type="url" 
+              id="workerUrlInput" 
+              value="https://kanba-worker.zeinab-ghodspour.workers.dev/"
+              placeholder="https://your-worker.workers.dev/" 
+              class="flex-1 text-xs p-2.5 rounded-xl border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white text-slate-800 shadow-2xs"
               dir="ltr"
             >
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">API Key (کلید وب اپلیکیشن)</label>
-            <input 
-              type="text" 
-              id="fbApiKey" 
-              value="AIzaSyDZ6WldVZAA60z-U_GU4TgGTVnnqTudrZk"
-              placeholder="AIzaSy..." 
-              class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              dir="ltr"
-            >
+            <button id="saveWorkerUrlBtn" class="px-4 py-2 text-xs bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold transition shadow-xs whitespace-nowrap">
+              ذخیره و تست اتصال
+            </button>
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-slate-700 mb-1">یا چسباندن مستقیم کل شیء firebaseConfig (اختیاری):</label>
-          <textarea 
-            id="fbConfigRaw" 
-            rows="3" 
-            placeholder='{ "apiKey": "...", "databaseURL": "...", "projectId": "..." }'
-            class="w-full text-xs p-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-            dir="ltr"
-          ></textarea>
+        <div id="cloudDrawerStatusBox" class="p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-3 shadow-2xs mb-3">
+          <div class="flex items-center gap-2">
+            <span id="cloudStatusLed" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+            <span id="cloudStatusMsg" class="font-medium">در حال بررسی وضعیت اتصال...</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="manualFetchBtn" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition font-medium">
+              🔄 دریافت آخرین داده‌ها از سرور
+            </button>
+            <button id="manualPushBtn" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition font-bold">
+              ⬆️ ارسال کل داده‌های محلی به سرور
+            </button>
+          </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 mt-3">
-          <button id="disconnectFbBtn" class="px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 rounded-lg transition font-medium">
-            قطع اتصال و بازگشت به حافظه محلی
-          </button>
-          <button id="saveFbConfigBtn" class="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition shadow-xs">
-            ذخیره و اتصال به دیتابیس
+        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+          <span>پشتیبانی خودکار از حالت آفلاین و ذخیره محلی (LocalStorage) فعال است.</span>
+          <button id="resetWorkerUrlBtn" class="text-slate-500 hover:text-indigo-600 underline">
+            بازنشانی آدرس پیش‌فرض
           </button>
         </div>
       </div>
@@ -457,20 +449,20 @@
     ];
 
     const INITIAL_MEMBERS = [
-      { id: 'm-1', name: 'علی محمدی', color: '#4f46e5' },
-      { id: 'm-2', name: 'سارا رضایی', color: '#059669' },
-      { id: 'm-3', name: 'محسن کریمی', color: '#ea580c' },
-      { id: 'm-4', name: 'نگار احمدی', color: '#db2777' },
+      { id: 'm-1794308290800', name: 'زینب قدس پور', color: '#0891b2' },
+      { id: 'm-1794308304489', name: 'سارا عاشوری', color: '#16a34a' },
+      { id: 'm-1794308306909', name: 'زینب غلامی', color: '#2563eb' },
+      { id: 'm-1794308311303', name: 'حانیه اسدی', color: '#ea580c' },
     ];
 
-    const INITIAL_TAGS = ['فرانت‌اند', 'بک‌اند', 'طراحی', 'UI/UX', 'QA', 'دیتابیس', 'پشتیبانی'];
+    const INITIAL_TAGS = ['محتوایی', 'بازی', 'اجرایی'];
 
     // Default sample data with Subtasks and Supervisor (ناظر)
     const INITIAL_TASKS = [
       {
         id: 'task-1',
         title: 'طراحی ساختار دیتابیس کانبان',
-        description: 'ایجاد اسکیما برای ذخیره و هماهنگی آنلاین در Firebase Realtime',
+        description: 'ایجاد اسکیما برای ذخیره و هماهنگی آنلاین در سرور Cloudflare Worker',
         status: 'new',
         priority: 'urgent',
         assignee: 'علی محمدی',
@@ -544,22 +536,14 @@
       }
     ];
 
-    const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDZ6WldVZAA60z-U_GU4TgGTVnnqTudrZk",
-      authDomain: "kanban-b11ae.firebaseapp.com",
-      databaseURL: "https://kanban-b11ae-default-rtdb.firebaseio.com",
-      projectId: "kanban-b11ae",
-      storageBucket: "kanban-b11ae.firebasestorage.app",
-      messagingSenderId: "813385232643",
-      appId: "1:813385232643:web:b03d5867009fb1e435f936"
-    };
+    // Cloudflare Worker Endpoint
+    const DEFAULT_WORKER_URL = 'https://kanba-worker.zeinab-ghodspour.workers.dev/';
+    let workerUrl = localStorage.getItem('kanban_worker_url') || DEFAULT_WORKER_URL;
+    if (!workerUrl.endsWith('/')) workerUrl += '/';
 
     let tasks = [];
     let members = [];
     let availableTags = [];
-    let firebaseApp = null;
-    let firebaseDb = null;
-    let isFirebaseConnected = false;
     let draggedTaskId = null;
 
     /**
@@ -567,12 +551,15 @@
      */
     function initApp() {
       loadStorageData();
-      loadFirebaseConfig();
       setupEventListeners();
       renderMembersDrawer();
       renderTagsDrawer();
       updateDataListTags();
       renderBoard();
+      // Fetch latest cloud data from Cloudflare Worker
+      fetchCloudData(true);
+      // Setup background polling and tab focus refresh
+      setupBackgroundSync();
     }
 
     /**
@@ -704,7 +691,7 @@
     }
 
     /**
-     * Storage & Synchronization (Firebase + LocalStorage Fallback)
+     * Storage & Synchronization (Cloudflare Worker + LocalStorage Fallback)
      */
     function loadStorageData() {
       // 1. Tasks
@@ -755,50 +742,28 @@
       updateTaskCount();
     }
 
-    function syncTasks(shouldNotifyFirebase = true) {
+    function syncTasks(immediateCloud = true) {
       saveTasksToLocalStorage();
       renderBoard();
-
-      if (isFirebaseConnected && firebaseDb && shouldNotifyFirebase) {
-        setSyncStatus('syncing', 'در حال ذخیره در فایربیس...');
-        firebaseDb.ref('kanban_tasks').set(tasks)
-          .then(() => {
-            console.log("Tasks successfully saved to Firebase!");
-            setSyncStatus('online', 'متصل به فایربیس (Realtime)');
-          })
-          .catch((err) => {
-            console.error('Firebase save error:', err);
-            setSyncStatus('error', 'خطا در ذخیره فایربیس');
-            if (err.message && (err.message.includes('permission_denied') || err.message.includes('PERMISSION_DENIED'))) {
-              alert('خطای فایربیس: دسترسی ذخیره‌سازی مسدود است!\n\nلطفاً در تب Rules کنسول فایربیس، دسترسی write را روی true تنظیم کرده و دکمه Publish را بزنید.');
-            }
-          });
-      }
+      triggerCloudSave({ kanban_tasks: tasks }, immediateCloud);
     }
 
-    function syncMembers(shouldNotifyFirebase = true) {
+    function syncMembers(immediateCloud = true) {
       localStorage.setItem('kanban_members', JSON.stringify(members));
       renderMembersDrawer();
       renderBoard();
-
-      if (isFirebaseConnected && firebaseDb && shouldNotifyFirebase) {
-        firebaseDb.ref('kanban_members').set(members);
-      }
+      triggerCloudSave({ kanban_members: members }, immediateCloud);
     }
 
-    function syncTags(shouldNotifyFirebase = true) {
+    function syncTags(immediateCloud = true) {
       localStorage.setItem('kanban_tags', JSON.stringify(availableTags));
       renderTagsDrawer();
       updateDataListTags();
-
-      if (isFirebaseConnected && firebaseDb && shouldNotifyFirebase) {
-        firebaseDb.ref('kanban_tags').set(availableTags);
-      }
+      triggerCloudSave({ kanban_tags: availableTags }, immediateCloud);
     }
 
     function setSyncStatus(state, text) {
       const indicator = document.getElementById('syncIndicator');
-      if (!indicator) return;
       const textElem = document.getElementById('syncStatusText');
       const dotElem = document.getElementById('syncStatusDot');
 
@@ -806,150 +771,227 @@
         textElem.textContent = text;
       }
 
-      indicator.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium text-xs ';
-      let dotClass = 'w-2 h-2 rounded-full ';
+      if (indicator) {
+        indicator.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-medium text-xs ';
+        let dotClass = 'w-2 h-2 rounded-full ';
 
-      if (state === 'online') {
-        indicator.className += 'bg-emerald-100 text-emerald-800';
-        dotClass += 'bg-emerald-500';
-      } else if (state === 'syncing') {
-        indicator.className += 'bg-blue-100 text-blue-800';
-        dotClass += 'bg-blue-500 animate-spin';
-      } else if (state === 'error') {
-        indicator.className += 'bg-rose-100 text-rose-800';
-        dotClass += 'bg-rose-500';
-      } else {
-        indicator.className += 'bg-amber-100 text-amber-800';
-        dotClass += 'bg-amber-500 animate-pulse';
+        if (state === 'online') {
+          indicator.className += 'bg-emerald-100 text-emerald-800';
+          dotClass += 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+        } else if (state === 'syncing') {
+          indicator.className += 'bg-blue-100 text-blue-800';
+          dotClass += 'bg-blue-500 animate-spin';
+        } else if (state === 'error') {
+          indicator.className += 'bg-rose-100 text-rose-800';
+          dotClass += 'bg-rose-500';
+        } else {
+          indicator.className += 'bg-amber-100 text-amber-800';
+          dotClass += 'bg-amber-500';
+        }
+
+        if (dotElem) {
+          dotElem.className = dotClass;
+        }
       }
+    }
 
-      if (dotElem) {
-        dotElem.className = dotClass;
+    function updateCloudDrawerStatus(isOk, message) {
+      const led = document.getElementById('cloudStatusLed');
+      const msg = document.getElementById('cloudStatusMsg');
+      if (led) {
+        led.className = isOk 
+          ? 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]' 
+          : 'w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]';
+      }
+      if (msg) {
+        msg.textContent = message;
+        msg.className = isOk ? 'font-medium text-slate-700' : 'font-medium text-rose-600';
       }
     }
 
     /**
-     * Firebase Realtime Database Integration
+     * Cloudflare Worker Synchronization (REST via native Fetch)
      */
-    function initFirebase(config) {
-      try {
-        if (firebaseApp) {
-          firebase.app().delete();
+    let cloudSaveTimer = null;
+    let pendingCloudPayload = {};
+    let isSavingToCloud = false;
+    let queuedCloudPayload = null;
+
+    function triggerCloudSave(partialPayload, immediate = true) {
+      Object.assign(pendingCloudPayload, partialPayload);
+
+      if (immediate) {
+        if (cloudSaveTimer) {
+          clearTimeout(cloudSaveTimer);
+          cloudSaveTimer = null;
         }
-        firebaseApp = firebase.initializeApp(config);
-        firebaseDb = firebase.database();
-        isFirebaseConnected = true;
-
-        // Monitor physical connection to Firebase servers
-        firebaseDb.ref('.info/connected').on('value', (snap) => {
-          if (snap.val() === true) {
-            console.log("Firebase connection established successfully.");
-            setSyncStatus('online', 'متصل به فایربیس (Realtime)');
-          } else {
-            console.log("Firebase connecting...");
-            if (isFirebaseConnected) {
-              setSyncStatus('syncing', 'در حال اتصال به فایربیس...');
-            }
-          }
-        });
-
-        // 1. Listen for Tasks updates in Realtime
-        firebaseDb.ref('kanban_tasks').on('value', (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            let taskList = null;
-            if (Array.isArray(data)) {
-              taskList = data.filter(Boolean);
-            } else if (typeof data === 'object') {
-              taskList = Object.values(data).filter(Boolean);
-            }
-
-            if (taskList && taskList.length > 0) {
-              tasks = taskList;
-              tasks.forEach(t => {
-                if (t.status === 'completed') t.status = 'done';
-                if (!t.supervisor && t.reporter) t.supervisor = t.reporter;
-                if (!Array.isArray(t.subtasks)) t.subtasks = [];
-              });
-              saveTasksToLocalStorage();
-              renderBoard();
-            }
-          } else if (tasks.length > 0) {
-            // Initial seed if cloud DB is completely blank
-            firebaseDb.ref('kanban_tasks').set(tasks);
-          }
-        }, (error) => {
-          console.error("Firebase listen error (tasks):", error);
-          setSyncStatus('error', 'عدم دسترسی به فایربیس (Rules بسته است)');
-          alert('توجه: اتصال به دیتابیس فایربیس به دلیل قوانین دسترسی مسدود شد!\n\nلطفاً در کنسول فایربیس وارد Realtime Database > تب Rules شده و مطمئن شوید دسترسی read و write روی true است:\n{\n  ".read": true,\n  ".write": true\n}\nو سپس Publish را بزنید.');
-        });
-
-        // 2. Listen for Members updates in Realtime
-        firebaseDb.ref('kanban_members').on('value', (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            let mList = null;
-            if (Array.isArray(data)) mList = data.filter(Boolean);
-            else if (typeof data === 'object') mList = Object.values(data).filter(Boolean);
-
-            if (mList && mList.length > 0) {
-              members = mList;
-              localStorage.setItem('kanban_members', JSON.stringify(members));
-              renderMembersDrawer();
-              renderBoard();
-            }
-          } else if (members.length > 0) {
-            firebaseDb.ref('kanban_members').set(members);
-          }
-        });
-
-        // 3. Listen for Tags updates in Realtime
-        firebaseDb.ref('kanban_tags').on('value', (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            let tList = null;
-            if (Array.isArray(data)) tList = data.filter(Boolean);
-            else if (typeof data === 'object') tList = Object.values(data).filter(Boolean);
-
-            if (tList && tList.length > 0) {
-              availableTags = tList;
-              localStorage.setItem('kanban_tags', JSON.stringify(availableTags));
-              renderTagsDrawer();
-              updateDataListTags();
-            }
-          } else if (availableTags.length > 0) {
-            firebaseDb.ref('kanban_tags').set(availableTags);
-          }
-        });
-
-      } catch (e) {
-        console.error("Firebase initialization failed:", e);
-        isFirebaseConnected = false;
-        setSyncStatus('error', 'خطا در مشخصات فایربیس');
+        flushCloudSave();
+      } else {
+        if (!cloudSaveTimer) {
+          cloudSaveTimer = setTimeout(() => {
+            cloudSaveTimer = null;
+            flushCloudSave();
+          }, 350);
+        }
       }
     }
 
-    function loadFirebaseConfig() {
-      if (localStorage.getItem('kanban_firebase_disabled') === 'true') {
-        setSyncStatus('offline', 'حافظه محلی (آفلاین)');
+    async function flushCloudSave() {
+      if (Object.keys(pendingCloudPayload).length === 0) return;
+      
+      if (isSavingToCloud) {
+        queuedCloudPayload = Object.assign(queuedCloudPayload || {}, pendingCloudPayload);
+        pendingCloudPayload = {};
         return;
       }
 
-      const savedConfig = localStorage.getItem('kanban_firebase_config');
-      let config = DEFAULT_FIREBASE_CONFIG;
-      if (savedConfig) {
-        try {
-          config = JSON.parse(savedConfig);
-        } catch (e) {
-          config = DEFAULT_FIREBASE_CONFIG;
+      const payloadToSend = { ...pendingCloudPayload };
+      pendingCloudPayload = {};
+      isSavingToCloud = true;
+
+      setSyncStatus('syncing', 'در حال همگام‌سازی ابری...');
+      try {
+        const res = await fetch(workerUrl, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payloadToSend)
+        });
+
+        if (!res.ok) {
+          throw new Error(`پاسخ ناموفق سرور (${res.status})`);
+        }
+
+        setSyncStatus('online', 'متصل و همگام با Cloudflare Worker');
+        updateCloudDrawerStatus(true, `همگام‌سازی با موفقیت انجام شد (${new Date().toLocaleTimeString('fa-IR')})`);
+      } catch (err) {
+        console.warn('Cloud save error:', err);
+        setSyncStatus('error', 'خطا در ذخیره ابری');
+        updateCloudDrawerStatus(false, 'خطا در ارسال داده به سرور: ' + err.message);
+      } finally {
+        isSavingToCloud = false;
+        if (queuedCloudPayload) {
+          const next = queuedCloudPayload;
+          queuedCloudPayload = null;
+          triggerCloudSave(next, true);
         }
       }
-      if (config && (config.databaseURL || config.apiKey)) {
-        document.getElementById('fbDbUrl').value = config.databaseURL || '';
-        document.getElementById('fbApiKey').value = config.apiKey || '';
-        document.getElementById('fbConfigRaw').value = JSON.stringify(config, null, 2);
-        initFirebase(config);
+    }
+
+    async function fetchCloudData(showStatus = false) {
+      if (showStatus) setSyncStatus('syncing', 'در حال اتصال به سرور ابری...');
+      try {
+        const response = await fetch(workerUrl, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) {
+          throw new Error(`خطای سرور (${response.status})`);
+        }
+        const data = await response.json();
+        if (!data || typeof data !== 'object') {
+          throw new Error('قالب اطلاعات سرور معتبر نیست');
+        }
+
+        let boardNeedsUpdate = false;
+
+        // 1. Tasks
+        if (Array.isArray(data.kanban_tasks)) {
+          const cloudTasks = data.kanban_tasks.filter(Boolean);
+          cloudTasks.forEach(t => {
+            if (t.status === 'completed') t.status = 'done';
+            if (!t.supervisor && t.reporter) t.supervisor = t.reporter;
+            if (!Array.isArray(t.subtasks)) t.subtasks = [];
+          });
+          if (JSON.stringify(cloudTasks) !== JSON.stringify(tasks)) {
+            tasks = cloudTasks;
+            localStorage.setItem('kanban_tasks_data', JSON.stringify(tasks));
+            boardNeedsUpdate = true;
+          }
+        }
+
+        // 2. Members
+        if (Array.isArray(data.kanban_members) && data.kanban_members.length > 0) {
+          const cloudMembers = data.kanban_members.filter(Boolean);
+          if (JSON.stringify(cloudMembers) !== JSON.stringify(members)) {
+            members = cloudMembers;
+            localStorage.setItem('kanban_members', JSON.stringify(members));
+            renderMembersDrawer();
+            boardNeedsUpdate = true;
+          }
+        }
+
+        // 3. Tags
+        if (Array.isArray(data.kanban_tags) && data.kanban_tags.length > 0) {
+          const cloudTags = data.kanban_tags.filter(Boolean);
+          if (JSON.stringify(cloudTags) !== JSON.stringify(availableTags)) {
+            availableTags = cloudTags;
+            localStorage.setItem('kanban_tags', JSON.stringify(availableTags));
+            renderTagsDrawer();
+            updateDataListTags();
+            boardNeedsUpdate = true;
+          }
+        }
+
+        if (boardNeedsUpdate) {
+          renderBoard();
+        }
+
+        setSyncStatus('online', 'متصل و همگام با Cloudflare Worker');
+        updateCloudDrawerStatus(true, `متصل به سرور. آخرین بررسی: ${new Date().toLocaleTimeString('fa-IR')}`);
+      } catch (err) {
+        console.warn('Cloudflare fetch error:', err);
+        setSyncStatus('offline', 'آفلاین / حافظه محلی');
+        updateCloudDrawerStatus(false, 'خطا در ارتباط با سرور: ' + err.message);
       }
+    }
+
+    async function pushAllDataToCloud() {
+      if (!confirm('آیا از ارسال و جایگزینی کامل تمام تسک‌ها، اعضا و تگ‌ها بر روی سرور اطمینان دارید؟')) {
+        return;
+      }
+      setSyncStatus('syncing', 'در حال ارسال کل داده‌ها...');
+      try {
+        const payload = {
+          kanban_tasks: tasks,
+          kanban_members: members,
+          kanban_tags: availableTags
+        };
+        const res = await fetch(workerUrl, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`کد خطای ${res.status}`);
+        setSyncStatus('online', 'متصل و همگام با Cloudflare Worker');
+        updateCloudDrawerStatus(true, 'تمام داده‌ها با موفقیت بر روی سرور ذخیره شدند.');
+        alert('اطلاعات بورد با موفقیت بر روی سرور ثبت و همگام‌سازی شد.');
+      } catch (err) {
+        alert('خطا در ارسال اطلاعات: ' + err.message);
+        setSyncStatus('error', 'خطا در همگام‌سازی');
+        updateCloudDrawerStatus(false, 'خطا در ارسال داده‌ها: ' + err.message);
+      }
+    }
+
+    function setupBackgroundSync() {
+      // Background Polling every 12 seconds
+      setInterval(() => {
+        if (document.hidden) return;
+        if (draggedTaskId) return;
+        const active = document.activeElement;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) {
+          return; // Skip poll cycle if user is typing
+        }
+        fetchCloudData(false);
+      }, 12000);
+
+      // Refresh on window focus (when switching to the tab)
+      window.addEventListener('focus', () => {
+        if (!document.hidden && !draggedTaskId) {
+          fetchCloudData(false);
+        }
+      });
     }
 
     /**
@@ -1752,7 +1794,7 @@
       const menuBtn = document.getElementById('menuToggleBtn');
       const dropdownMenu = document.getElementById('dropdownMenu');
       const membersTagsDrawer = document.getElementById('membersTagsDrawer');
-      const settingsBanner = document.getElementById('firebaseSettingsBanner');
+      const settingsBanner = document.getElementById('cloudSettingsBanner');
 
       menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1808,13 +1850,43 @@
         }
       });
 
-      // Menu Item: Firebase Settings
-      document.getElementById('menuItemFirebase').addEventListener('click', () => {
+      // Menu Item: Cloud Server Settings
+      document.getElementById('menuItemCloudServer').addEventListener('click', () => {
         dropdownMenu.classList.add('hidden');
         settingsBanner.classList.toggle('hidden');
+        if (!settingsBanner.classList.contains('hidden')) {
+          document.getElementById('workerUrlInput').value = workerUrl;
+        }
       });
       document.getElementById('closeSettingsBtn').addEventListener('click', () => {
         settingsBanner.classList.add('hidden');
+      });
+
+      // Save Custom Worker URL
+      document.getElementById('saveWorkerUrlBtn').addEventListener('click', () => {
+        const inputVal = document.getElementById('workerUrlInput').value.trim();
+        if (!inputVal) {
+          alert('لطفاً آدرس معتبر سرور را وارد کنید.');
+          return;
+        }
+        workerUrl = inputVal.endsWith('/') ? inputVal : (inputVal + '/');
+        localStorage.setItem('kanban_worker_url', workerUrl);
+        fetchCloudData(true);
+        alert('آدرس سرور با موفقیت به‌روزرسانی شد و درخواست دریافت داده‌ها ارسال گردید.');
+      });
+
+      // Manual Fetch / Push buttons in Cloud Drawer
+      document.getElementById('manualFetchBtn').addEventListener('click', () => {
+        fetchCloudData(true);
+      });
+      document.getElementById('manualPushBtn').addEventListener('click', () => {
+        pushAllDataToCloud();
+      });
+      document.getElementById('resetWorkerUrlBtn').addEventListener('click', () => {
+        workerUrl = DEFAULT_WORKER_URL;
+        document.getElementById('workerUrlInput').value = DEFAULT_WORKER_URL;
+        localStorage.removeItem('kanban_worker_url');
+        fetchCloudData(true);
       });
 
       // Menu Item: Export PDF
@@ -1881,52 +1953,7 @@
         e.target.value = '';
       });
 
-      // Save Firebase Config
-      document.getElementById('saveFbConfigBtn').addEventListener('click', () => {
-        const rawJson = document.getElementById('fbConfigRaw').value.trim();
-        const dbUrl = document.getElementById('fbDbUrl').value.trim();
-        const apiKey = document.getElementById('fbApiKey').value.trim();
-
-        let configObj = null;
-        if (rawJson) {
-          try {
-            configObj = JSON.parse(rawJson);
-          } catch (e) {
-            alert('متن وارد شده در بخش کانفیگ خام، یک JSON معتبر نیست.');
-            return;
-          }
-        } else if (dbUrl) {
-          configObj = {
-            databaseURL: dbUrl,
-            apiKey: apiKey || 'dummy-key-for-open-rules'
-          };
-        } else {
-          alert('لطفاً حداقل آدرس دیتابیس (databaseURL) را وارد کنید.');
-          return;
-        }
-
-        localStorage.removeItem('kanban_firebase_disabled');
-        localStorage.setItem('kanban_firebase_config', JSON.stringify(configObj));
-        initFirebase(configObj);
-        settingsBanner.classList.add('hidden');
-        alert('کانفیگ فایربیس ذخیره شد و تلاش برای برقراری ارتباط آغاز گردید.');
-      });
-
-      // Disconnect Firebase
-      document.getElementById('disconnectFbBtn').addEventListener('click', () => {
-        if (confirm('آیا از قطع ارتباط فایربیس و سوئیچ به حافظه محلی اطمینان دارید؟')) {
-          localStorage.setItem('kanban_firebase_disabled', 'true');
-          localStorage.removeItem('kanban_firebase_config');
-          if (firebaseApp) {
-            firebase.app().delete();
-            firebaseApp = null;
-            firebaseDb = null;
-          }
-          isFirebaseConnected = false;
-          setSyncStatus('offline', 'حافظه محلی (آفلاین)');
-          settingsBanner.classList.add('hidden');
-        }
-      });
+      // End of event listeners setup
     }
 
     function escapeHtml(str) {
