@@ -156,7 +156,7 @@
                         <span>تایم‌لاین و برنامه‌ریزی اردو</span>
                         <span class="text-xs bg-sky-100 text-sky-700 font-medium px-2 py-0.5 rounded-full">راه روشن</span>
                     </h1>
-                    <p class="text-[11px] text-slate-500">از دوشنبه ۲۵ آبان (ظهر) تا جمعه ۲۹ آبان (ظهر)</p>
+                    <p class="text-[11px] text-slate-500">از سه‌شنبه ۳ آذر تا جمعه ۶ آذر</p>
                 </div>
             </div>
 
@@ -318,8 +318,8 @@
         <div id="allDaysOverviewWrapper" class="hidden flex flex-col gap-6">
             <div class="bg-sky-50 border border-sky-200 rounded-xl p-4 flex items-center justify-between no-print">
                 <div>
-                    <h2 class="text-base font-bold text-sky-900">نمای کامل کل اردو (از دوشنبه ظهر تا جمعه ظهر)</h2>
-                    <p class="text-xs text-sky-700 mt-0.5">در این نما تمامی ۵ روز اردو به همراه تمام برنامه‌ها و ایده‌ها به صورت یکجا نمایش داده می‌شود.</p>
+                    <h2 class="text-base font-bold text-sky-900">نمای کامل کل اردو (از سه‌شنبه ۳ آذر تا جمعه ۶ آذر)</h2>
+                    <p class="text-xs text-sky-700 mt-0.5">در این نما تمامی روزهای اردو به همراه تمام برنامه‌های اصلی، موازی و ایده‌ها به صورت یکجا نمایش داده می‌شود.</p>
                 </div>
                 <button onclick="triggerPrint()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition">
                     چاپ کل اردو (PDF)
@@ -351,8 +351,8 @@
             <form id="eventForm" onsubmit="saveEventForm(event)" class="p-6 space-y-4 flex-1">
                 <input type="hidden" id="editEventId">
 
-                <!-- Title & Category Row -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- Title, Category & Row/Track Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-700 mb-1">عنوان برنامه <span class="text-rose-500">*</span></label>
                         <input type="text" id="eventTitleInput" required placeholder="مثال: حرکت اتوبوس‌ها و پذیرایی" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
@@ -364,6 +364,16 @@
                         </div>
                         <select id="eventCategorySelect" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
                             <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">ردیف خط زمانی (لاین موازی)</label>
+                        <select id="eventTrackSelect" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none bg-white">
+                            <option value="0">ردیف ۱ (برنامه اصلی)</option>
+                            <option value="1">ردیف ۲ (برنامه موازی / پلن پشتیبان)</option>
+                            <option value="2">ردیف ۳ (برنامه موازی ۳)</option>
+                            <option value="3">ردیف ۴ (برنامه موازی ۴)</option>
+                            <option value="4">ردیف ۵ (برنامه موازی ۵)</option>
                         </select>
                     </div>
                 </div>
@@ -499,23 +509,39 @@
         </div>
     </div>
 
-    <!-- Modal: Day Hours Config -->
+    <!-- Modal: Day Hours & Titles Config -->
     <div id="dayHoursModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-sm p-5 space-y-4">
-            <h3 class="font-bold text-slate-800 text-sm">تنظیم ساعات خط زمانی این روز</h3>
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                    <span>📅</span>
+                    <span>تنظیمات و ساعات این روز</span>
+                </h3>
+                <button onclick="closeDayHoursModal()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+            </div>
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs text-slate-600 mb-1">ساعت شروع خط زمانی:</label>
-                    <input type="number" id="dayStartHourInput" min="0" max="23" class="w-full px-3 py-1.5 border rounded-lg text-sm text-center font-mono">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">نام و تاریخ روز:</label>
+                    <input type="text" id="dayNameInput" placeholder="مثال: سه‌شنبه ۳ آذر" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-600 mb-1">ساعت پایان خط زمانی:</label>
-                    <input type="number" id="dayEndHourInput" min="1" max="24" class="w-full px-3 py-1.5 border rounded-lg text-sm text-center font-mono">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">زیرعنوان یا رویکرد روز:</label>
+                    <input type="text" id="daySubtitleInput" placeholder="مثال: روز اول - آغاز اردو" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t">
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">ساعت شروع:</label>
+                        <input type="number" id="dayStartHourInput" min="0" max="23" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-600 mb-1">ساعت پایان:</label>
+                        <input type="number" id="dayEndHourInput" min="1" max="24" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center font-mono">
+                    </div>
                 </div>
             </div>
             <div class="flex items-center justify-end gap-2 pt-2 border-t">
-                <button onclick="closeDayHoursModal()" class="px-3 py-1.5 border rounded-lg text-xs">انصراف</button>
-                <button onclick="saveDayHours()" class="px-4 py-1.5 bg-sky-600 text-white rounded-lg text-xs font-bold">ذخیره</button>
+                <button onclick="closeDayHoursModal()" class="px-3 py-1.5 border rounded-lg text-xs text-slate-600 hover:bg-slate-50 transition">انصراف</button>
+                <button onclick="saveDayHours()" class="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition">ذخیره تغییرات</button>
             </div>
         </div>
     </div>
@@ -663,8 +689,8 @@
             days: [
                 {
                     id: 'day-1',
-                    name: 'دوشنبه ۲۵ آبان',
-                    subtitle: 'آغاز اردو (ظهر)',
+                    name: 'سه‌شنبه ۳ آذر',
+                    subtitle: 'روز اول (آغاز اردو و حرکت)',
                     startHour: 12,
                     endHour: 24,
                     events: [
@@ -776,7 +802,7 @@
                 },
                 {
                     id: 'day-2',
-                    name: 'سه‌شنبه ۲۶ آبان',
+                    name: 'چهارشنبه ۴ آذر',
                     subtitle: 'روز دوم (آموزش و رقابت)',
                     startHour: 6,
                     endHour: 24,
@@ -879,7 +905,7 @@
                 },
                 {
                     id: 'day-3',
-                    name: 'چهارشنبه ۲۷ آبان',
+                    name: 'پنج‌شنبه ۵ آذر',
                     subtitle: 'روز سوم (کار تیمی و اردوی صحرایی)',
                     startHour: 6,
                     endHour: 24,
@@ -948,8 +974,8 @@
                 },
                 {
                     id: 'day-4',
-                    name: 'پنجشنبه ۲۸ آبان',
-                    subtitle: 'روز چهارم (فینال مسابقات و جشن)',
+                    name: 'جمعه ۶ آذر',
+                    subtitle: 'روز چهارم (فینال مسابقات، اختتامیه و بازگشت)',
                     startHour: 6,
                     endHour: 24,
                     events: [
@@ -987,8 +1013,8 @@
                             id: 'ev-403',
                             title: 'جشن بزرگ اختتامیه و اهدای جوایز',
                             category: 'cultural',
-                            startTime: '18:00',
-                            endTime: '21:30',
+                            startTime: '14:00',
+                            endTime: '17:00',
                             track: 0,
                             inCharge: 'مدیر اردو و مجری',
                             location: 'سالن اصلی',
@@ -997,58 +1023,19 @@
                             checklist: [{ text: 'تندیس‌ها و جوایز نقدی', done: true }],
                             ideas: [{ id: 'i15', text: 'پخش کلیپ غافلگیرکننده عکس‌های مخفی اردو' }],
                             notes: ''
-                        }
-                    ]
-                },
-                {
-                    id: 'day-5',
-                    name: 'جمعه ۲۹ آبان',
-                    subtitle: 'روز پایانی (جمع‌بندی و بازگشت)',
-                    startHour: 7,
-                    endHour: 15,
-                    events: [
-                        {
-                            id: 'ev-501',
-                            title: 'صبحانه و تحویل اتاق‌ها',
-                            category: 'meal',
-                            startTime: '08:00',
-                            endTime: '09:30',
-                            track: 0,
-                            inCharge: 'مسئول خوابگاه',
-                            location: 'خوابگاه‌ها',
-                            audience: 'همه',
-                            cost: 600000,
-                            checklist: [{ text: 'جمع‌آوری کلیدها و کارت‌ها', done: false }],
-                            ideas: [],
-                            notes: ''
                         },
                         {
-                            id: 'ev-502',
-                            title: 'عکس دسته‌جمعی و اهدای گواهینامه‌ها',
-                            category: 'cultural',
-                            startTime: '10:00',
-                            endTime: '11:30',
-                            track: 0,
-                            inCharge: 'روابط عمومی',
-                            location: 'محوطه ورودی',
-                            audience: 'همه',
-                            cost: 300000,
-                            checklist: [{ text: 'بنر رسمی اردو', done: true }],
-                            ideas: [{ id: 'i16', text: 'دفترچه یادگاری و امضای دسته‌جمعی' }],
-                            notes: ''
-                        },
-                        {
-                            id: 'ev-503',
-                            title: 'ناهار خداحافظی و حرکت به سمت مبدا',
+                            id: 'ev-404',
+                            title: 'جمع‌بندی وسایل، عکس یادگاری و بازگشت',
                             category: 'transit',
-                            startTime: '12:00',
-                            endTime: '14:00',
+                            startTime: '17:30',
+                            endTime: '20:00',
                             track: 0,
-                            inCharge: 'ترابری',
-                            location: 'ترمینال حرکت',
+                            inCharge: 'ترابری و عوامل اجرایی',
+                            location: 'ایستگاه حرکت',
                             audience: 'همه',
                             cost: 2800000,
-                            checklist: [],
+                            checklist: [{ text: 'چک کردن وسایل بچه‌ها', done: true }],
                             ideas: [],
                             notes: 'پایان رسمی اردو.'
                         }
@@ -1092,6 +1079,31 @@
             if (!data.categories || !Array.isArray(data.categories) || data.categories.length === 0) {
                 data.categories = DEFAULT_CATEGORIES;
             }
+
+            // Auto-migrate dates to 3 to 6 Azar
+            if (data.days && data.days.length >= 4) {
+                if (data.days[0] && (data.days[0].name.includes('آبان') || data.days[0].name.includes('دوشنبه ۲۵'))) {
+                    data.days[0].name = 'سه‌شنبه ۳ آذر';
+                    data.days[0].subtitle = 'روز اول (آغاز اردو و حرکت)';
+                }
+                if (data.days[1] && (data.days[1].name.includes('آبان') || data.days[1].name.includes('سه‌شنبه ۲۶'))) {
+                    data.days[1].name = 'چهارشنبه ۴ آذر';
+                    data.days[1].subtitle = 'روز دوم (آموزش و رقابت)';
+                }
+                if (data.days[2] && (data.days[2].name.includes('آبان') || data.days[2].name.includes('چهارشنبه ۲۷'))) {
+                    data.days[2].name = 'پنج‌شنبه ۵ آذر';
+                    data.days[2].subtitle = 'روز سوم (کار تیمی و اردوی صحرایی)';
+                }
+                if (data.days[3] && (data.days[3].name.includes('آبان') || data.days[3].name.includes('پنجشنبه ۲۸') || data.days[3].name.includes('جمعه'))) {
+                    data.days[3].name = 'جمعه ۶ آذر';
+                    data.days[3].subtitle = 'روز چهارم (فینال مسابقات، اختتامیه و بازگشت)';
+                }
+                // Prune empty 5th day if it has no events
+                if (data.days.length === 5 && (!data.days[4].events || data.days[4].events.length === 0)) {
+                    data.days.splice(4, 1);
+                }
+            }
+
             data.days.forEach(d => {
                 if (!d.events || !Array.isArray(d.events)) {
                     if (d.events && typeof d.events === 'object') {
@@ -1101,6 +1113,9 @@
                     }
                 }
                 d.events.forEach(ev => {
+                    if (typeof ev.track !== 'number' || isNaN(ev.track) || ev.track < 0) {
+                        ev.track = 0;
+                    }
                     if (!ev.ideas || !Array.isArray(ev.ideas)) {
                         if (ev.ideas && typeof ev.ideas === 'object') ev.ideas = Object.values(ev.ideas);
                         else ev.ideas = [];
@@ -1522,28 +1537,56 @@
             });
         }
 
-        // Compute Tracks for non-colliding layout
+        // Compute Stable Tracks for parallel & non-colliding layout
         function assignTracks(events) {
-            events.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-            const tracks = [];
-            events.forEach(ev => {
-                const evStart = timeToMinutes(ev.startTime);
-                const evEnd = timeToMinutes(ev.endTime);
-                let placed = false;
-                for (let i = 0; i < tracks.length; i++) {
-                    if (tracks[i] <= evStart) {
-                        ev.track = i;
-                        tracks[i] = evEnd;
-                        placed = true;
-                        break;
+            if (!events || events.length === 0) return 2;
+
+            const trackIntervals = {};
+            function doesOverlap(start1, end1, start2, end2) {
+                return (start1 < end2 && end1 > start2);
+            }
+
+            // Sort chronologically to maintain natural reading order
+            const sorted = [...events].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+            sorted.forEach(ev => {
+                const s = timeToMinutes(ev.startTime);
+                const e = timeToMinutes(ev.endTime);
+
+                let desiredTrack = (typeof ev.track === 'number' && ev.track >= 0) ? ev.track : null;
+
+                if (desiredTrack !== null) {
+                    const intervals = trackIntervals[desiredTrack] || [];
+                    const hasCollision = intervals.some(it => doesOverlap(s, e, it.start, it.end));
+                    if (!hasCollision) {
+                        ev.track = desiredTrack;
+                        if (!trackIntervals[desiredTrack]) trackIntervals[desiredTrack] = [];
+                        trackIntervals[desiredTrack].push({ start: s, end: e, id: ev.id });
+                        return;
                     }
                 }
-                if (!placed) {
-                    ev.track = tracks.length;
-                    tracks.push(evEnd);
+
+                // If collision or no track set, find next available non-overlapping track
+                let t = (desiredTrack !== null) ? (desiredTrack + 1) : 0;
+                while (true) {
+                    const intervals = trackIntervals[t] || [];
+                    const hasCollision = intervals.some(it => doesOverlap(s, e, it.start, it.end));
+                    if (!hasCollision) {
+                        ev.track = t;
+                        if (!trackIntervals[t]) trackIntervals[t] = [];
+                        trackIntervals[t].push({ start: s, end: e, id: ev.id });
+                        break;
+                    }
+                    t++;
                 }
             });
-            return Math.max(1, tracks.length);
+
+            let maxTrack = 0;
+            events.forEach(ev => {
+                if (typeof ev.track === 'number' && ev.track > maxTrack) maxTrack = ev.track;
+            });
+
+            return Math.max(2, maxTrack + 1);
         }
 
         // Render Timeline Ruler & Exact Synchronized Grid
@@ -1589,20 +1632,19 @@
                 tickEl.className = 'absolute bottom-0 pointer-events-none bg-slate-600';
                 tickEl.style.width = '2px';
                 tickEl.style.height = '14px';
-                tickEl.style.right = `${hourX - 1}px`; // Centered precisely on hourX
+                tickEl.style.right = `${hourX - 1}px`;
                 ruler.appendChild(tickEl);
 
                 // 3. Hour Text Label (Fixed width 60px, text-align center, perfectly centered on hourX)
                 const labelEl = document.createElement('div');
                 labelEl.className = 'absolute top-1 font-mono font-bold text-xs text-slate-700 text-center select-none pointer-events-none';
                 labelEl.style.width = '60px';
-                labelEl.style.right = `${hourX - 30}px`; // Center of 60px is at hourX
+                labelEl.style.right = `${hourX - 30}px`;
                 labelEl.textContent = `${String(h).padStart(2, '0')}:۰۰`;
                 ruler.appendChild(labelEl);
 
                 // 4. Quarter-Hour Ticks & 30-min Grid Line (Between h and h+1)
                 if (h < endHour) {
-                    // 15-minute mark (Quarter past: 15 mins after h)
                     const x15 = Math.round(hourX + 0.25 * basePxPerHour);
                     const tick15 = document.createElement('div');
                     tick15.className = 'absolute bottom-0 pointer-events-none bg-slate-300';
@@ -1611,7 +1653,6 @@
                     tick15.style.right = `${x15}px`;
                     ruler.appendChild(tick15);
 
-                    // 30-minute mark (Half past - TALLER: 11px, medium color)
                     const x30 = Math.round(hourX + 0.50 * basePxPerHour);
                     const tick30 = document.createElement('div');
                     tick30.className = 'absolute bottom-0 pointer-events-none bg-slate-400';
@@ -1620,13 +1661,11 @@
                     tick30.style.right = `${x30 - 0.75}px`;
                     ruler.appendChild(tick30);
 
-                    // 30-minute subtle dashed grid line in tracks
                     const halfGridLine = document.createElement('div');
                     halfGridLine.className = 'absolute top-0 bottom-0 pointer-events-none border-r border-dashed border-slate-200/80';
                     halfGridLine.style.right = `${x30}px`;
                     gridLayer.appendChild(halfGridLine);
 
-                    // 45-minute mark (Quarter to: 45 mins after h)
                     const x45 = Math.round(hourX + 0.75 * basePxPerHour);
                     const tick45 = document.createElement('div');
                     tick45.className = 'absolute bottom-0 pointer-events-none bg-slate-300';
@@ -1637,11 +1676,21 @@
                 }
             }
 
-            // Assign tracks to prevent overlap
+            // Assign stable tracks (parallel lines)
             const numTracks = assignTracks(day.events);
-            const trackHeight = 72;
+            const trackHeight = 74;
             const totalTrackHeight = Math.max(260, numTracks * trackHeight + 40);
             tracksContainer.style.height = `${totalTrackHeight}px`;
+
+            // Draw subtle parallel lane dividers
+            for (let t = 0; t < numTracks; t++) {
+                const lane = document.createElement('div');
+                lane.className = 'absolute right-0 left-0 border-b border-dashed border-slate-200/60 pointer-events-none flex items-center pr-2';
+                lane.style.top = `${t * trackHeight}px`;
+                lane.style.height = `${trackHeight}px`;
+                lane.innerHTML = `<span class="text-[10px] font-mono text-slate-300 select-none">لاین ${t + 1}</span>`;
+                gridLayer.appendChild(lane);
+            }
 
             function timeToRightPx(timeStr) {
                 const mins = timeToMinutes(timeStr);
@@ -1658,16 +1707,14 @@
                 const topPx = (ev.track || 0) * trackHeight + 10;
 
                 const box = document.createElement('div');
-                box.className = `event-box absolute rounded-xl p-2.5 shadow-sm text-white transition-all cursor-grab active:cursor-grabbing flex flex-col justify-between overflow-hidden group select-none border border-black/10`;
+                box.className = `event-box absolute rounded-xl p-2.5 shadow-sm text-white transition-[box-shadow,background-color] cursor-pointer hover:shadow-md flex flex-col justify-between overflow-hidden group select-none border border-black/10`;
                 box.style.backgroundColor = catMeta.color;
                 box.style.right = `${rightPx}px`;
                 box.style.width = `${widthPx}px`;
                 box.style.top = `${topPx}px`;
-                box.style.height = `${trackHeight - 12}px`;
+                box.style.height = `${trackHeight - 14}px`;
                 box.dataset.eventId = ev.id;
 
-                // REMOVED TIME BADGE INSIDE BOX (Per user request: time is seen from the ruler)
-                // Inside box: Title + Location/Person + Checklist count + Ideas indicator
                 const ideasCount = (ev.ideas && ev.ideas.length > 0) ? ev.ideas.length : 0;
                 const checklistCount = (ev.checklist && ev.checklist.length > 0) ? ev.checklist.length : 0;
 
@@ -1675,7 +1722,7 @@
                     <!-- Resize Handle Left (End Time in RTL) -->
                     <div class="resize-handle-left" title="تنظیم ساعت پایان" data-handle="left"></div>
 
-                    <!-- Main Title inside box (Clean & Legible) -->
+                    <!-- Main Title inside box -->
                     <div class="flex items-center justify-between gap-1 pointer-events-none">
                         <span class="font-bold text-xs truncate leading-snug drop-shadow-sm">${ev.title}</span>
                     </div>
@@ -1686,18 +1733,18 @@
                             ${ev.location ? `📍 ${ev.location}` : (ev.inCharge ? `👤 ${ev.inCharge}` : '')}
                         </span>
                         <div class="flex items-center gap-1 flex-shrink-0 pointer-events-auto">
-                            <!-- Idea button (Clickable to view/edit ideas) -->
-                            <button type="button" onclick="openQuickPopup(event, '${ev.id}', 'ideas')" 
+                            <!-- Idea button -->
+                            <button type="button" onclick="event.stopPropagation(); openQuickPopup(event, '${ev.id}', 'ideas')" 
                                     class="${ideasCount > 0 ? 'bg-amber-400 text-amber-950 font-bold px-1.5 py-0.5' : 'bg-black/25 text-white/80 hover:text-white px-1 py-0.5'} rounded text-[9px] shadow-xs hover:scale-105 active:scale-95 transition flex items-center gap-0.5 cursor-pointer"
                                     title="${ideasCount > 0 ? ideasCount + ' ایده ثبت‌شده (کلیک برای مشاهده و ثبت)' : 'ثبت ایده یا گزینه پیشنهادی'}">
                                 <span>💡</span>
                                 <span>${ideasCount > 0 ? ideasCount : '+'}</span>
                             </button>
 
-                            <!-- Checklist / Tasks button (Clickable to view/toggle tasks) -->
-                            <button type="button" onclick="openQuickPopup(event, '${ev.id}', 'checklist')" 
+                            <!-- Checklist button -->
+                            <button type="button" onclick="event.stopPropagation(); openQuickPopup(event, '${ev.id}', 'checklist')" 
                                     class="${checklistCount > 0 ? 'bg-black/35 hover:bg-black/50 text-white font-bold px-1.5 py-0.5' : 'bg-black/25 text-white/80 hover:text-white px-1 py-0.5'} rounded text-[9px] shadow-xs hover:scale-105 active:scale-95 transition flex items-center gap-0.5 cursor-pointer"
-                                    title="${checklistCount > 0 ? ev.checklist.filter(c => c.done).length + ' از ' + checklistCount + ' مورد آماده (کلیک برای چک‌لیست)' : 'ثبت چک‌لیست وسایل و تسک‌ها'}">
+                                    title="${checklistCount > 0 ? ev.checklist.filter(c => c.done).length + ' از ' + checklistCount + ' مورد آماده' : 'ثبت چک‌لیست وسایل و تسک‌ها'}">
                                 <span>🎒</span>
                                 <span>${checklistCount > 0 ? `${ev.checklist.filter(c => c.done).length}/${checklistCount}` : '+'}</span>
                             </button>
@@ -1719,25 +1766,25 @@
                     hideTooltip();
                 });
 
-                // Right-Click Context Menu (Edit & Delete options)
+                // Right-Click Context Menu
                 box.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     openTimelineContextMenu(e, ev.id);
                 });
 
-                // Click to open modal
+                // Direct Click to open edit modal (User Request!)
                 box.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('resize-handle-left') || e.target.classList.contains('resize-handle-right')) return;
-                    if (box.dataset.wasDragged === 'true') {
-                        delete box.dataset.wasDragged;
+                    if (e.target.closest('button') || e.target.closest('.resize-handle-left') || e.target.closest('.resize-handle-right')) return;
+                    if (box.dataset.hasDragged === 'true') {
+                        delete box.dataset.hasDragged;
                         return;
                     }
                     openEditEventModal(ev.id);
                 });
 
-                // Attach Drag & Resize Event Listeners
-                setupInteractions(box, ev, basePxPerHour, startHour, endHour);
+                // Attach Drag & Resize Event Listeners (supports horizontal time + vertical track dragging)
+                setupInteractions(box, ev, basePxPerHour, startHour, endHour, trackHeight);
 
                 tracksContainer.appendChild(box);
             });
@@ -1758,17 +1805,20 @@
             tooltipEl.style.opacity = '0';
         }
 
-        // Drag & Resize Engine (RTL-aware with 15-min snap)
-        function setupInteractions(box, eventObj, pxPerHour, startHour, endHour) {
+        // Drag & Resize Engine (RTL-aware with 15-min snap + vertical row tracking)
+        function setupInteractions(box, eventObj, pxPerHour, startHour, endHour, trackHeight) {
             const snapMinutes = 15;
             const pxPerMinute = pxPerHour / 60;
 
             let isDragging = false;
+            let hasDragged = false;
             let isResizingLeft = false;  // End Time in RTL
             let isResizingRight = false; // Start Time in RTL
             let startMouseX = 0;
+            let startMouseY = 0;
             let initialStartMinutes = 0;
             let initialEndMinutes = 0;
+            let initialTrack = (typeof eventObj.track === 'number') ? eventObj.track : 0;
 
             const leftHandle = box.querySelector('.resize-handle-left');
             const rightHandle = box.querySelector('.resize-handle-right');
@@ -1778,6 +1828,7 @@
                 e.preventDefault();
                 isResizingLeft = true;
                 startMouseX = e.clientX;
+                startMouseY = e.clientY;
                 initialEndMinutes = timeToMinutes(eventObj.endTime);
                 document.body.style.cursor = 'ew-resize';
                 addWindowListeners();
@@ -1788,26 +1839,38 @@
                 e.preventDefault();
                 isResizingRight = true;
                 startMouseX = e.clientX;
+                startMouseY = e.clientY;
                 initialStartMinutes = timeToMinutes(eventObj.startTime);
                 document.body.style.cursor = 'ew-resize';
                 addWindowListeners();
             });
 
             box.addEventListener('mousedown', (e) => {
-                if (e.target === leftHandle || e.target === rightHandle) return;
+                if (e.target.closest('button') || e.target === leftHandle || e.target === rightHandle) return;
                 isDragging = true;
+                hasDragged = false;
                 startMouseX = e.clientX;
+                startMouseY = e.clientY;
                 initialStartMinutes = timeToMinutes(eventObj.startTime);
                 initialEndMinutes = timeToMinutes(eventObj.endTime);
+                initialTrack = (typeof eventObj.track === 'number') ? eventObj.track : 0;
                 addWindowListeners();
             });
 
             function onMouseMove(e) {
                 if (!isDragging && !isResizingLeft && !isResizingRight) return;
                 const deltaX = e.clientX - startMouseX;
+                const deltaY = e.clientY - startMouseY;
 
                 if (isDragging) {
-                    box.dataset.wasDragged = 'true';
+                    if (Math.hypot(deltaX, deltaY) > 5) {
+                        hasDragged = true;
+                        box.dataset.hasDragged = 'true';
+                        box.style.cursor = 'grabbing';
+                        box.style.zIndex = '40';
+                    }
+                    if (!hasDragged) return;
+
                     const deltaMinutes = Math.round((-deltaX / pxPerMinute) / snapMinutes) * snapMinutes;
                     const duration = initialEndMinutes - initialStartMinutes;
 
@@ -1828,9 +1891,15 @@
                     eventObj.startTime = minutesToTime(newStart);
                     eventObj.endTime = minutesToTime(newEnd);
 
+                    // Snap to vertical tracks/rows
+                    const deltaTracks = Math.round(deltaY / trackHeight);
+                    const newTrack = Math.max(0, initialTrack + deltaTracks);
+                    eventObj.track = newTrack;
+
                     const curDayStartMins = startHour * 60;
                     box.style.right = `${((newStart - curDayStartMins) / 60) * pxPerHour}px`;
-                    showTooltip(e, `زمان جدید: ${eventObj.startTime} الی ${eventObj.endTime}`);
+                    box.style.top = `${newTrack * trackHeight + 10}px`;
+                    showTooltip(e, `زمان: ${eventObj.startTime} الی ${eventObj.endTime} (ردیف ${newTrack + 1})`);
                 }
 
                 if (isResizingRight) {
@@ -1873,14 +1942,22 @@
 
             function onMouseUp() {
                 if (isDragging || isResizingLeft || isResizingRight) {
+                    const wasResize = isResizingLeft || isResizingRight;
+                    const wasActualDrag = isDragging && hasDragged;
+
                     isDragging = false;
+                    hasDragged = false;
                     isResizingLeft = false;
                     isResizingRight = false;
                     document.body.style.cursor = 'default';
+                    box.style.zIndex = '';
                     hideTooltip();
                     removeWindowListeners();
-                    saveState();
-                    renderAll();
+
+                    if (wasResize || wasActualDrag) {
+                        saveState();
+                        renderAll();
+                    }
                 }
             }
 
@@ -2241,6 +2318,8 @@
             renderModalChecklist();
             renderModalIdeas();
             updateCalculatedDuration();
+            const trackSelect = document.getElementById('eventTrackSelect');
+            if (trackSelect) trackSelect.value = '0';
 
             document.getElementById('eventModal').classList.remove('hidden');
         }
@@ -2255,6 +2334,8 @@
             document.getElementById('eventTitleInput').value = ev.title;
 
             populateCategoryDropdown(ev.category);
+            const trackSelect = document.getElementById('eventTrackSelect');
+            if (trackSelect) trackSelect.value = String(typeof ev.track === 'number' ? ev.track : 0);
 
             document.getElementById('eventStartTimeInput').value = ev.startTime;
             document.getElementById('eventEndTimeInput').value = ev.endTime;
@@ -2377,6 +2458,8 @@
 
             const cleanChecklist = activeChecklistDraft.filter(c => c.text.trim() !== '');
             const cleanIdeas = activeIdeasDraft.filter(i => i.text.trim() !== '');
+            const trackVal = parseInt(document.getElementById('eventTrackSelect')?.value);
+            const track = isNaN(trackVal) ? 0 : trackVal;
 
             if (editId) {
                 const ev = day.events.find(x => x.id === editId);
@@ -2392,6 +2475,7 @@
                     ev.notes = notes;
                     ev.checklist = cleanChecklist;
                     ev.ideas = cleanIdeas;
+                    ev.track = track;
                 }
             } else {
                 const newEvent = {
@@ -2407,7 +2491,7 @@
                     notes,
                     checklist: cleanChecklist,
                     ideas: cleanIdeas,
-                    track: 0
+                    track: track
                 };
                 day.events.push(newEvent);
             }
@@ -2430,7 +2514,7 @@
             }
         }
 
-        // Duplicate Event
+        // Duplicate Event (parallel copy placed on next track by default)
         function duplicateEvent(eventId) {
             const day = getCurrentDay();
             const ev = day.events.find(e => e.id === eventId);
@@ -2439,6 +2523,7 @@
             const copy = JSON.parse(JSON.stringify(ev));
             copy.id = 'ev-' + Date.now();
             copy.title += ' (کپی)';
+            copy.track = (typeof ev.track === 'number') ? (ev.track + 1) : 1;
             day.events.push(copy);
             saveState();
             renderAll();
@@ -2508,9 +2593,13 @@
             }
         }
 
-        // Day Hours Modal Logic
+        // Day Hours & Titles Modal Logic
         function editDayHours() {
             const day = getCurrentDay();
+            const nameIn = document.getElementById('dayNameInput');
+            if (nameIn) nameIn.value = day.name;
+            const subIn = document.getElementById('daySubtitleInput');
+            if (subIn) subIn.value = day.subtitle || '';
             document.getElementById('dayStartHourInput').value = day.startHour;
             document.getElementById('dayEndHourInput').value = day.endHour;
             document.getElementById('dayHoursModal').classList.remove('hidden');
@@ -2521,13 +2610,18 @@
         }
 
         function saveDayHours() {
+            const day = getCurrentDay();
+            const nameIn = document.getElementById('dayNameInput');
+            if (nameIn && nameIn.value.trim()) day.name = nameIn.value.trim();
+            const subIn = document.getElementById('daySubtitleInput');
+            if (subIn) day.subtitle = subIn.value.trim();
+
             const s = parseInt(document.getElementById('dayStartHourInput').value);
             const e = parseInt(document.getElementById('dayEndHourInput').value);
             if (isNaN(s) || isNaN(e) || s >= e) {
                 alert('ساعت شروع باید کمتر از ساعت پایان باشد.');
                 return;
             }
-            const day = getCurrentDay();
             day.startHour = s;
             day.endHour = e;
             closeDayHoursModal();
