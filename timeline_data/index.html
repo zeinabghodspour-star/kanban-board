@@ -160,48 +160,72 @@
                 </div>
             </div>
 
-            <!-- Global Action Controls -->
-            <div class="flex items-center flex-wrap gap-2">
-                <!-- Add Event Button -->
-                <button onclick="openNewEventModal()" class="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    <span>افزودن برنامه جدید</span>
-                </button>
-
-                <!-- Category Manager Button -->
-                <button onclick="openCategoryManagerModal()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 transition" title="مدیریت و رنگ‌بندی دسته‌بندی‌ها">
-                    <span>🎨</span>
-                    <span>دسته‌بندی‌ها</span>
-                </button>
-
-                <!-- Zoom Controls -->
-                <div id="zoomControlsContainer" class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 text-xs">
-                    <button onclick="changeZoom(-1)" class="px-2.5 py-1 rounded hover:bg-white text-slate-700 font-bold" title="کوچک‌نمایی">−</button>
-                    <span id="zoomLevelText" class="px-2 font-mono font-bold text-slate-800 text-[11px]">100%</span>
-                    <button onclick="changeZoom(1)" class="px-2.5 py-1 rounded hover:bg-white text-slate-700 font-bold" title="بزرگ‌نمایی">+</button>
+            <!-- Left Side Controls: Sync Badge + Three-Dots Dropdown Menu -->
+            <div class="flex items-center gap-3">
+                <!-- Sync Indicator Badge -->
+                <div id="saveStatusIndicator" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs hover:bg-emerald-100" onclick="openCloudSettingsModal()" title="وضعیت اتصال ابری (برای تنظیمات کلیک کنید)">
+                    <span id="saveStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"></span>
+                    <span id="saveStatusText">همگام با سرور ابری</span>
                 </div>
 
-                <!-- Export/Import & Print Buttons -->
-                <div class="flex items-center gap-1 border-r border-slate-200 pr-2 mr-1">
-                    <button onclick="saveToFile()" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 transition" title="دانلود فایل پشتیبان (JSON)">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <!-- Three-Dots (⋮) Action Menu -->
+                <div class="relative">
+                    <button id="menuToggleBtn" onclick="toggleDropdownMenu(event)" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100/90 hover:bg-slate-200 text-slate-700 font-extrabold text-xl transition-all shadow-xs active:scale-95" title="منوی امکانات و تنظیمات">
+                        ⋮
                     </button>
-                    <label class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer" title="بارگذاری فایل پشتیبان">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <input type="file" accept=".json" class="hidden" onchange="loadFromFile(event)">
-                    </label>
-                    <button onclick="triggerPrint()" class="flex items-center gap-1 bg-emerald-600 text-white hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition" title="چاپ یا ذخیره بصورت PDF">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span>چاپ / PDF</span>
-                    </button>
-                    <button onclick="openCloudSettingsModal()" class="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 transition" title="تنظیمات سرور ابری (Cloudflare Worker)">
-                        <span>☁️</span>
-                        <span class="hidden sm:inline">سرور ابری</span>
-                    </button>
-                    <a href="../" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 transition" title="بازگشت به بورد کارهای طرح و برنامه">
-                        <span>📋</span>
-                        <span class="hidden sm:inline">بورد کانبان</span>
-                    </a>
+
+                    <!-- Dropdown Menu -->
+                    <div id="dropdownMenu" class="hidden absolute left-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/90 py-2 z-50 text-xs flex flex-col divide-y divide-slate-100 transition-all">
+                        <div class="py-1">
+                            <button onclick="closeDropdownMenu(); openNewEventModal();" class="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-sky-50 text-sky-700 font-bold text-right w-full transition">
+                                <span class="text-base">➕</span>
+                                <span>افزودن برنامه جدید</span>
+                            </button>
+                            <button onclick="closeDropdownMenu(); openCategoryManagerModal();" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium text-right w-full transition">
+                                <span class="text-base">🎨</span>
+                                <span>مدیریت دسته‌بندی‌ها و رنگ‌ها</span>
+                            </button>
+                        </div>
+
+                        <div class="py-2 px-3.5 flex items-center justify-between text-slate-700 bg-slate-50/60">
+                            <span class="font-medium flex items-center gap-1.5"><span>🔍</span><span>بزرگ‌نمایی نمای گانت:</span></span>
+                            <div class="flex items-center bg-white rounded-lg p-0.5 border border-slate-200 text-xs shadow-2xs">
+                                <button onclick="changeZoom(-1)" class="px-2 py-0.5 rounded hover:bg-slate-100 text-slate-700 font-bold">−</button>
+                                <span id="zoomLevelText" class="px-2 font-mono font-bold text-slate-800 text-[11px]">100%</span>
+                                <button onclick="changeZoom(1)" class="px-2 py-0.5 rounded hover:bg-slate-100 text-slate-700 font-bold">+</button>
+                            </div>
+                        </div>
+
+                        <div class="py-1">
+                            <button onclick="closeDropdownMenu(); openCloudSettingsModal();" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-indigo-50 text-indigo-700 font-bold text-right w-full transition">
+                                <span class="text-base">☁️</span>
+                                <span>تنظیمات سرور ابری (Cloudflare Worker)</span>
+                            </button>
+                            <button onclick="closeDropdownMenu(); triggerPrint();" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-emerald-50 text-emerald-800 font-medium text-right w-full transition">
+                                <span class="text-base">📄</span>
+                                <span>خروجی نسخه چاپی / PDF</span>
+                            </button>
+                        </div>
+
+                        <div class="py-1">
+                            <button onclick="closeDropdownMenu(); saveToFile();" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium text-right w-full transition">
+                                <span class="text-base">⬇️</span>
+                                <span>دانلود فایل پشتیبان (JSON)</span>
+                            </button>
+                            <label class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium text-right w-full transition cursor-pointer">
+                                <span class="text-base">⬆️</span>
+                                <span>بارگذاری فایل پشتیبان (JSON)</span>
+                                <input type="file" accept=".json" class="hidden" onchange="closeDropdownMenu(); loadFromFile(event);">
+                            </label>
+                        </div>
+
+                        <div class="py-1">
+                            <a href="../" class="flex items-center gap-2.5 px-3.5 py-2 hover:bg-slate-50 text-slate-700 font-medium text-right w-full transition">
+                                <span class="text-base">📋</span>
+                                <span>بازگشت به بورد کارهای طرح و برنامه</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -222,60 +246,6 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 flex flex-col gap-4">
-
-        <!-- Info & Stats Bar (Only shown on single-day view) -->
-        <section id="statsBarSection" class="grid grid-cols-2 sm:grid-cols-4 gap-3 no-print">
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-lg">
-                    📋
-                </div>
-                <div>
-                    <div class="text-xs text-slate-500">تعداد برنامه‌ها</div>
-                    <div id="statEventCount" class="text-lg font-bold text-slate-800">۰</div>
-                </div>
-            </div>
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">
-                    ⏳
-                </div>
-                <div>
-                    <div class="text-xs text-slate-500">مجموع زمان زمان‌بندی‌شده</div>
-                    <div id="statTotalHours" class="text-lg font-bold text-slate-800">۰ ساعت</div>
-                </div>
-            </div>
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-lg">
-                    💰
-                </div>
-                <div>
-                    <div class="text-xs text-slate-500">برآورد هزینه</div>
-                    <div id="statTotalCost" class="text-lg font-bold text-slate-800">۰ تومان</div>
-                </div>
-            </div>
-            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-lg">
-                    💡
-                </div>
-                <div>
-                    <div class="text-xs text-slate-500">ایده‌ها و گزینه‌ها</div>
-                    <div id="statTotalIdeas" class="text-lg font-bold text-slate-800">۰ ایده ثبت‌شده</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Instructions Banner -->
-        <div id="instructionsBanner" class="bg-sky-50/80 border border-sky-200 rounded-xl px-4 py-2 text-xs text-sky-950 flex items-center justify-between gap-2 no-print">
-            <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-sky-700 font-bold flex items-center gap-1"><span>💡</span> راهنما:</span>
-                <span>برای <b>تغییر طول</b> برنامه لبه‌های راست یا چپ باکس را بکشید. برای <b>جابجایی</b> کل باکس را بگیرید. با <b>کلیک روی هر باکس</b> جزئیات کامل باز می‌شود. بخش ایده‌ها در جدول زیر برای طوفان فکری اولیه است.</span>
-            </div>
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <span id="saveStatusIndicator" class="text-emerald-700 flex items-center gap-1.5 text-[11px] font-medium bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs cursor-pointer hover:bg-slate-50 transition" onclick="openCloudSettingsModal()" title="وضعیت همگام‌سازی ابری - برای تنظیمات کلیک کنید">
-                    <span id="saveStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span id="saveStatusText">ذخیره خودکار فعال</span>
-                </span>
-            </div>
-        </div>
 
         <!-- Single Day View Container -->
         <div id="singleDayViewWrapper" class="flex flex-col gap-4">
@@ -1087,6 +1057,63 @@
             ]
         };
 
+        // Dropdown Menu Helpers
+        function toggleDropdownMenu(e) {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            const m = document.getElementById('dropdownMenu');
+            if (m) m.classList.toggle('hidden');
+        }
+
+        function closeDropdownMenu() {
+            const m = document.getElementById('dropdownMenu');
+            if (m) m.classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const m = document.getElementById('dropdownMenu');
+            const btn = document.getElementById('menuToggleBtn');
+            if (m && !m.classList.contains('hidden')) {
+                if (!m.contains(e.target) && btn && !btn.contains(e.target)) {
+                    m.classList.add('hidden');
+                }
+            }
+        });
+
+        // App Data Sanitization (handles Firebase empty arrays & object conversion)
+        function sanitizeData(data) {
+            if (!data || typeof data !== 'object') return JSON.parse(JSON.stringify(DEFAULT_DATA));
+            if (!data.days) data.days = [];
+            if (!Array.isArray(data.days) && typeof data.days === 'object') {
+                data.days = Object.values(data.days);
+            }
+            if (!data.categories || !Array.isArray(data.categories) || data.categories.length === 0) {
+                data.categories = DEFAULT_CATEGORIES;
+            }
+            data.days.forEach(d => {
+                if (!d.events || !Array.isArray(d.events)) {
+                    if (d.events && typeof d.events === 'object') {
+                        d.events = Object.values(d.events);
+                    } else {
+                        d.events = [];
+                    }
+                }
+                d.events.forEach(ev => {
+                    if (!ev.ideas || !Array.isArray(ev.ideas)) {
+                        if (ev.ideas && typeof ev.ideas === 'object') ev.ideas = Object.values(ev.ideas);
+                        else ev.ideas = [];
+                    }
+                    if (!ev.checklist || !Array.isArray(ev.checklist)) {
+                        if (ev.checklist && typeof ev.checklist === 'object') ev.checklist = Object.values(ev.checklist);
+                        else ev.checklist = [];
+                    }
+                });
+            });
+            return data;
+        }
+
         // App State
         let appData = loadState();
 
@@ -1095,18 +1122,8 @@
                 const stored = localStorage.getItem(STORAGE_KEY);
                 if (stored) {
                     const parsed = JSON.parse(stored);
-                    if (parsed && parsed.days && parsed.days.length > 0) {
-                        // Ensure categories exist
-                        if (!parsed.categories || parsed.categories.length === 0) {
-                            parsed.categories = DEFAULT_CATEGORIES;
-                        }
-                        // Ensure ideas array on all events
-                        parsed.days.forEach(d => {
-                            d.events.forEach(ev => {
-                                if (!ev.ideas) ev.ideas = [];
-                            });
-                        });
-                        return parsed;
+                    if (parsed && (parsed.days || parsed.categories)) {
+                        return sanitizeData(parsed);
                     }
                 }
             } catch (e) {
@@ -1244,18 +1261,10 @@
                 });
                 if (!res.ok) throw new Error(`کد خطا: ${res.status}`);
                 const data = await res.json();
-                if (data && data.days && Array.isArray(data.days) && data.days.length > 0) {
-                    if (!data.categories || data.categories.length === 0) {
-                        data.categories = DEFAULT_CATEGORIES;
-                    }
-                    data.days.forEach(d => {
-                        d.events.forEach(ev => {
-                            if (!ev.ideas) ev.ideas = [];
-                        });
-                    });
-
-                    if (JSON.stringify(data) !== JSON.stringify(appData)) {
-                        appData = data;
+                if (data && (data.days || data.categories)) {
+                    const cleaned = sanitizeData(data);
+                    if (JSON.stringify(cleaned) !== JSON.stringify(appData)) {
+                        appData = cleaned;
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
                         renderAll();
                     }
@@ -1321,12 +1330,29 @@
             setInterval(() => {
                 if (document.hidden) return;
                 const eventModal = document.getElementById('eventModal');
-                if (eventModal && !eventModal.classList.contains('hidden')) return;
+                const catModal = document.getElementById('categoryManagerModal');
+                const hourModal = document.getElementById('dayHoursModal');
+                if ((eventModal && !eventModal.classList.contains('hidden')) ||
+                    (catModal && !catModal.classList.contains('hidden')) ||
+                    (hourModal && !hourModal.classList.contains('hidden')) ||
+                    isSavingToCloud) return;
                 fetchCloudData(false);
-            }, 15000);
+            }, 12000);
 
             window.addEventListener('focus', () => {
-                if (!document.hidden) fetchCloudData(false);
+                if (!document.hidden && !isSavingToCloud) fetchCloudData(false);
+            });
+
+            window.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    if (cloudSaveTimer) {
+                        clearTimeout(cloudSaveTimer);
+                        cloudSaveTimer = null;
+                        flushCloudSave();
+                    }
+                } else {
+                    if (!isSavingToCloud) fetchCloudData(false);
+                }
             });
         }
 
@@ -1341,10 +1367,19 @@
         }
 
         function getCurrentDay() {
-            if (appData.activeDayIndex === 999) {
-                return appData.days[0];
+            if (!appData.days || appData.days.length === 0) {
+                appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
             }
-            return appData.days[appData.activeDayIndex] || appData.days[0];
+            let day;
+            if (appData.activeDayIndex === 999) {
+                day = appData.days[0];
+            } else {
+                day = appData.days[appData.activeDayIndex] || appData.days[0];
+            }
+            if (!day.events || !Array.isArray(day.events)) {
+                day.events = [];
+            }
+            return day;
         }
 
         function getCategoryMeta(catId) {
@@ -1442,22 +1477,32 @@
             container.appendChild(allDaysBtn);
 
             // Update sub-header titles
+            const dayHoursConfigArea = document.getElementById('dayHoursConfigArea');
+            const singleDayView = document.getElementById('singleDayViewWrapper');
+            const allDaysOverview = document.getElementById('allDaysOverviewWrapper');
+            const zoomControls = document.getElementById('zoomControlsContainer');
+            const statsBar = document.getElementById('statsBarSection');
+
             if (!isAllDaysActive) {
                 const curDay = getCurrentDay();
-                document.getElementById('currentDayTitle').textContent = curDay.name;
-                document.getElementById('currentDaySubtitle').textContent = curDay.subtitle || '';
-                document.getElementById('dayHoursSpan').textContent = `بازه زمانی: ساعت ${curDay.startHour}:۰۰ الی ${curDay.endHour}:۰۰`;
-                document.getElementById('dayHoursConfigArea').classList.remove('hidden');
-                document.getElementById('zoomControlsContainer').classList.remove('hidden');
-                document.getElementById('singleDayViewWrapper').classList.remove('hidden');
-                document.getElementById('statsBarSection').classList.remove('hidden');
-                document.getElementById('allDaysOverviewWrapper').classList.add('hidden');
+                const curTitle = document.getElementById('currentDayTitle');
+                if (curTitle) curTitle.textContent = curDay.name;
+                const curSub = document.getElementById('currentDaySubtitle');
+                if (curSub) curSub.textContent = curDay.subtitle || '';
+                const daySpan = document.getElementById('dayHoursSpan');
+                if (daySpan) daySpan.textContent = `بازه زمانی: ساعت ${curDay.startHour}:۰۰ الی ${curDay.endHour}:۰۰`;
+
+                if (dayHoursConfigArea) dayHoursConfigArea.classList.remove('hidden');
+                if (zoomControls) zoomControls.classList.remove('hidden');
+                if (singleDayView) singleDayView.classList.remove('hidden');
+                if (statsBar) statsBar.classList.remove('hidden');
+                if (allDaysOverview) allDaysOverview.classList.add('hidden');
             } else {
-                document.getElementById('dayHoursConfigArea').classList.add('hidden');
-                document.getElementById('zoomControlsContainer').classList.add('hidden');
-                document.getElementById('singleDayViewWrapper').classList.add('hidden');
-                document.getElementById('statsBarSection').classList.add('hidden');
-                document.getElementById('allDaysOverviewWrapper').classList.remove('hidden');
+                if (dayHoursConfigArea) dayHoursConfigArea.classList.add('hidden');
+                if (zoomControls) zoomControls.classList.add('hidden');
+                if (singleDayView) singleDayView.classList.add('hidden');
+                if (statsBar) statsBar.classList.add('hidden');
+                if (allDaysOverview) allDaysOverview.classList.remove('hidden');
             }
         }
 
@@ -1967,12 +2012,18 @@
                 tbody.appendChild(tr);
             });
 
-            // Update Stats Badges
-            document.getElementById('statEventCount').textContent = sortedEvents.length;
-            const hoursVal = (totalMinutes / 60).toFixed(1);
-            document.getElementById('statTotalHours').textContent = `${hoursVal} ساعت`;
-            document.getElementById('statTotalCost').textContent = `${formatTomans(totalCost)} تومان`;
-            document.getElementById('statTotalIdeas').textContent = `${totalIdeas} ایده و گزینه`;
+            // Update Stats Badges (if present in DOM)
+            const statEventCountEl = document.getElementById('statEventCount');
+            if (statEventCountEl) statEventCountEl.textContent = sortedEvents.length;
+            const statTotalHoursEl = document.getElementById('statTotalHours');
+            if (statTotalHoursEl) {
+                const hoursVal = (totalMinutes / 60).toFixed(1);
+                statTotalHoursEl.textContent = `${hoursVal} ساعت`;
+            }
+            const statTotalCostEl = document.getElementById('statTotalCost');
+            if (statTotalCostEl) statTotalCostEl.textContent = `${formatTomans(totalCost)} تومان`;
+            const statTotalIdeasEl = document.getElementById('statTotalIdeas');
+            if (statTotalIdeasEl) statTotalIdeasEl.textContent = `${totalIdeas} ایده و گزینه`;
         }
 
         // Quick Add / Delete Idea directly from table
@@ -2017,6 +2068,7 @@
             container.innerHTML = '';
 
             appData.days.forEach((day, dIdx) => {
+                if (!day.events || !Array.isArray(day.events)) day.events = [];
                 const dayCard = document.createElement('div');
                 dayCard.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm p-4 page-break';
 
@@ -2501,8 +2553,8 @@
             reader.onload = function(e) {
                 try {
                     const loaded = JSON.parse(e.target.result);
-                    if (loaded && loaded.days) {
-                        appData = loaded;
+                    if (loaded && (loaded.days || loaded.categories)) {
+                        appData = sanitizeData(loaded);
                         saveState();
                         renderAll();
                         alert('اطلاعات با موفقیت بارگذاری شد.');
